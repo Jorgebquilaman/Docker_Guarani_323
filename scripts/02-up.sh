@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+if [ ! -f src/composer.lock ]; then
+    echo "Falta el codigo fuente. Ejecutá primero: ./scripts/01-svn-checkout.sh"
+    exit 1
+fi
+
+docker compose up -d --build
+
+set -a
+# shellcheck disable=SC1091
+. ./.env
+set +a
+
+echo
+echo "Guaraní levantándose. Seguí el progreso con:"
+echo "  docker compose logs -f gestion"
+echo
+echo "Cuando termine: http://localhost:${GESTION_PORT}/guarani/3.23  (toba / toba)"

@@ -1,0 +1,4 @@
+src/.svn
+src/**/.svn
+.env
+*.log
