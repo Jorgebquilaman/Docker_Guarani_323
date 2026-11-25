@@ -1,0 +1,49 @@
+# syntax=docker/dockerfile:1.7
+FROM php:8.1-apache-bookworm
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    HOME_AUTOGESTION=/opt/guarani-3w \
+    TZ=America/Argentina/Buenos_Aires
+
+# Mismas extensiones que Gestión (composer.json de 3w exige las mismas)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git subversion unzip zip curl ca-certificates \
+        libpq-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libzip-dev \
+        libicu-dev postgresql-client fonts-dejavu-core fonts-liberation \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j"$(nproc)" \
+        pgsql pdo_pgsql gd zip exif bcmath intl opcache \
+    && pecl install apcu \
+    && docker-php-ext-enable apcu \
+    && a2enmod rewrite setenvif headers expires \
+    && echo 'ServerName localhost' > /etc/apache2/conf-available/servername.conf \
+    && a2enconf servername \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+COPY docker/php/guarani.ini /usr/local/etc/php/conf.d/99-guarani.ini
+
+WORKDIR /opt/guarani-3w
+
+COPY src-3w/ ./
+
+# Se instalan también las personalizaciones: el script oficial docker-instalar
+# ejecuta composer install en todos los composer.json del proyecto.
+RUN composer install --no-interaction --prefer-dist \
+    && for f in src/pers/composer.json src/pers_gestion/composer.json; do \
+         if [ -f "$f" ]; then (cd "$(dirname "$f")" && composer install --no-interaction); fi; \
+       done \
+    && mkdir -p instalacion/log instalacion/cache instalacion/temp \
+        instalacion/operaciones_inactivas src/siu/www/js/escalas \
+        src/siu/www/temp /var/log/guarani-3w \
+    && chown -R www-data:www-data instalacion src/siu/www/js/escalas \
+        src/siu/www/temp /var/log/guarani-3w \
+    && chmod -R g+rwX instalacion src/siu/www/js/escalas src/siu/www/temp
+
+COPY docker/entrypoint-3w.sh /usr/local/bin/entrypoint-3w.sh
+RUN chmod +x /usr/local/bin/entrypoint-3w.sh
+
+EXPOSE 80
+
+ENTRYPOINT ["/usr/local/bin/entrypoint-3w.sh"]
+CMD ["apache2-foreground"]

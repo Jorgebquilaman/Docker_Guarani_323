@@ -18,4 +18,5 @@ echo
 echo "Guaraní levantándose. Seguí el progreso con:"
 echo "  docker compose logs -f gestion"
 echo
-echo "Cuando termine: http://localhost:${GESTION_PORT}/guarani/3.23  (toba / toba)"
+echo "Gestión:     http://localhost:${GESTION_PORT}/guarani/3.23  (toba / toba)"
+echo "Autogestión: http://localhost:${W3_PORT:-8091}${AUTOGESTION_ALIAS:-/3w}"

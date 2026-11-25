@@ -4,19 +4,18 @@
 
 ```
                          host
-     ┌──────────────────┬──────────────────────┐
-     │  :8090           │  :5434               │
-     └────────┬─────────┴──────────┬───────────┘
-              │                    │
-     ┌────────▼─────────┐  ┌───────▼──────────┐
-     │   gestion        │  │   db             │
-     │ Apache 2.4 + PHP │  │ PostgreSQL 14    │
-     │ 8.1 + Composer 2 │  │ LATIN1 / escape  │
-     │ JDK 17 + Jasper  │  │                  │
-     │ JavaBridge :8081 │  │                  │
-     └────────┬─────────┘  └───────┬──────────┘
-              │   red interna      │
-              └──────── guarani_default ──────┘
+     ┌──────────────────┬────────────────────┬──────────────────┐
+     │  :8090           │  :8091             │  :5434           │
+     └────────┬─────────┴─────────┬──────────┴────────┬─────────┘
+              │                   │                   │
+     ┌────────▼─────────┐ ┌───────▼─────────┐ ┌───────▼──────────┐
+     │   gestion        │ │ autogestion(3w) │ │   db             │
+     │ Apache + PHP 8.1 │ │ Apache + PHP 8.1│ │ PostgreSQL 14    │
+     │ Composer + JDK   │ │ + intl + Chulupi│ │ LATIN1 / escape  │
+     │ JavaBridge :8081 │ │                 │ │                  │
+     └────────┬─────────┘ └───────┬─────────┘ └───────┬──────────┘
+              │                   │                   │
+              └───────── red interna: guarani_default ─┘
 ```
 
 - **`db`**: `postgres:14-bookworm`. Base `guarani3`, encoding `LATIN1`, locale `C`,
@@ -24,6 +23,10 @@
   `pg_isready`.
 - **`gestion`**: imagen construida desde el `Dockerfile`. Apache sirve PHP 8.1; dentro del
   mismo contenedor corre el JavaBridge de Jasper (puerto 8081, no publicado).
+- **`autogestion`**: imagen construida desde `Dockerfile.3w`. Apache + PHP 8.1 con la
+  extensión `intl` (la exige `laminas/laminas-i18n`), Composer y el framework Chulupi.
+  Usa la misma base `guarani3` (schemas `negocio`/`desarrollo`) y el JavaBridge de
+  `gestion`. Publica `/3w` en el puerto 8091. Ver [3W.md](3W.md).
 
 ## Imagen
 
@@ -71,6 +74,7 @@
 | `/toba_referencia/3.4` | referencia de Toba |
 | `/toba_usuarios/3.4` | administración de usuarios |
 | `/toba_guarani3` | núcleo del framework |
+| `/3w` (contenedor `autogestion`) | autogestión (`src/siu/www`) |
 
 ## Decisiones de configuración
 
@@ -84,6 +88,9 @@
 | Puerto 8090 | 8080 estaba ocupado por otro contenedor en el equipo original |
 | Volúmenes separados | Permiten reconstruir la imagen sin perder la instalación ni la base |
 | `menu=2` | La plantilla del SVN tiene un valor inválido que rompe la pantalla de login |
+| 3w como servicio separado | Usa el mismo `db` pero su propio Apache y configuración (`config.php`) |
+| `intl` en la imagen 3w | Lo exige `laminas/laminas-i18n` (dependencia de Chulupi) |
+| Jasper compartido | 3w apunta a `gestion:8081`; evita un segundo JavaBridge |
 
 ## Archivos del repositorio
 
@@ -92,16 +99,20 @@
 ├── .env                  # credenciales (NO versionar)
 ├── .env.example          # plantilla sin secretos
 ├── .gitignore
-├── .dockerignore         # excluye src/.svn del contexto de build
+├── .dockerignore         # excluye src/.svn y src-3w/.svn del contexto de build
 ├── docker-compose.yml
-├── Dockerfile
+├── Dockerfile            # Gestión
+├── Dockerfile.3w         # Autogestión
 ├── docker/
 │   ├── entrypoint.sh
+│   ├── entrypoint-3w.sh
 │   └── php/guarani.ini
 ├── scripts/
 │   ├── 01-svn-checkout.sh
 │   ├── 02-up.sh
+│   ├── 03-svn-checkout-3w.sh
 │   └── reset.sh
 ├── docs/                 # esta documentación
-└── src/                  # checkout SVN (NO versionar)
+├── src/                  # checkout SVN de Gestión (NO versionar)
+└── src-3w/               # checkout SVN de 3w (NO versionar)
 ```

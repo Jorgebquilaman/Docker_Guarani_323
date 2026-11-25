@@ -109,6 +109,20 @@ configurar_menu() {
     fi
 }
 
+configurar_url3w() {
+    # Gestión necesita saber dónde está Autogestión para los links de constancias, etc.
+    local ini="$PROJECT/instalacion/instalacion.ini"
+    [ -f "$ini" ] || return 0
+    if grep -q '^url3w[[:space:]]*=' "$ini"; then
+        sed -i "s#^url3w[[:space:]]*=.*#url3w = \"${URL_3W}\"#" "$ini"
+    elif grep -q '^\[xslfo\]' "$ini"; then
+        sed -i "s#^\[xslfo\]#url3w = \"${URL_3W}\"\n\n[xslfo]#" "$ini"
+    else
+        printf '\nurl3w = "%s"\n' "$URL_3W" >> "$ini"
+    fi
+    log "url3w configurada en ${URL_3W}"
+}
+
 configurar_fop() {
     local ini="$PROJECT/instalacion/instalacion.ini"
     local fop="$PROJECT/php/3ros/fop/fop"
@@ -175,6 +189,7 @@ fi
 # Configuraciones idempotentes (tambien en reinicios)
 configurar_menu
 configurar_fop
+configurar_url3w
 
 # Apache: toba.conf generado por la instalacion
 if [ -f "$PROJECT/instalacion/toba.conf" ]; then

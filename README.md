@@ -7,7 +7,7 @@
 <img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
 <img src="https://img.shields.io/badge/arm64%20%7C%20amd64-4C1?style=for-the-badge" alt="Arquitecturas">
 
-# 🐘 SIU-Guaraní Gestión en Docker
+# 🐘 SIU-Guaraní Gestión + Autogestión (3w) en Docker
 
 **Entorno local completo, reproducible y listo para usar en macOS, Linux o Windows (WSL2).**
 
@@ -21,7 +21,7 @@
 
 | | |
 |---|---|
-| 🧱 **Dos servicios** | PostgreSQL 14 + Apache/PHP 8.1 con Composer, Java y Jasper |
+| 🧱 **Tres servicios** | PostgreSQL 14 + Gestión (Apache/PHP 8.1, Java y Jasper) + Autogestión 3w |
 | 📦 **Instalación automática** | Toba, carga del proyecto, esquema de negocio y auditoría en el primer arranque |
 | 🔁 **Idempotente** | Los reinicios y las reconstrucciones no reinstalan ni pierden datos |
 | 🌐 **Todo publicado** | Gestión, editor, API REST y JavaBridge de reportes |
@@ -47,6 +47,7 @@ cp .env.example .env
 
 # 3. Descargar el código fuente (no hace falta svn instalado)
 ./scripts/01-svn-checkout.sh
+./scripts/03-svn-checkout-3w.sh   # Autogestión (3w)
 
 # 4. Construir y levantar
 ./scripts/02-up.sh
@@ -75,11 +76,13 @@ Cuando aparezca `Apache iniciado. Gestión: http://localhost:8090/guarani/3.23`,
 | Servicio | URL | Credenciales |
 |---|---|---|
 | 🖥️ **Gestión** | http://localhost:8090/guarani/3.23 | `toba` / `toba` |
+| 🎓 **Autogestión (3w)** | http://localhost:8091/3w | Usuario de alumno/persona de Guaraní |
 | 🛠️ **Editor Toba** | http://localhost:8090/toba_editor/3.4 | `toba` / `toba` |
 | 🔌 **API REST** | http://localhost:8090/guarani/3.23/rest/ | Requiere configuración OAuth |
 | 🗄️ **PostgreSQL** | `localhost:5434` · base `guarani3` | Las de `.env` |
 
-> ¿Puerto ocupado? Cambiá `GESTION_PORT` y `DB_PORT_HOST` en `.env`. No hace falta tocar el `docker-compose.yml`.
+> ¿Puerto ocupado? Cambiá `GESTION_PORT`, `W3_PORT` y `DB_PORT_HOST` en `.env`. No hace falta tocar el `docker-compose.yml`.
+> Para entrar a 3w necesitás una persona con usuario en Guaraní (el usuario `toba` es solo de gestión).
 
 ---
 
@@ -90,6 +93,7 @@ docker compose ps                                                          # hea
 curl -o /dev/null -w "%{http_code}\n" http://localhost:8090/guarani/3.23/   # 200
 curl -o /dev/null -w "%{http_code}\n" http://localhost:8090/toba_editor/3.4/ # 200
 curl -o /dev/null -w "%{http_code}\n" http://localhost:8090/guarani/3.23/rest/ # 302
+curl -o /dev/null -w "%{http_code}\n" http://localhost:8091/3w/                  # 200
 ```
 
 - [x] Checkout SVN de la revisión publicada
@@ -104,6 +108,7 @@ curl -o /dev/null -w "%{http_code}\n" http://localhost:8090/guarani/3.23/rest/ #
 | Guía | Qué encontrás |
 |---|---|
 | 📥 [Instalación](docs/INSTALACION.md) | Requisitos, credenciales, `.env`, puertos, macOS/Linux/WSL2 y publicación en GitHub |
+| 🎓 [Autogestión 3w](docs/3W.md) | Instalación, configuración, unidad académica, reportes y verificación |
 | ⚙️ [Operación](docs/OPERACION.md) | Comandos diarios, logs, backups, updates, reset, cron y API REST |
 | 🏗️ [Arquitectura](docs/ARQUITECTURA.md) | Servicios, imagen, flujo del entrypoint, alias y decisiones |
 | 🩺 [Troubleshooting](docs/TROUBLESHOOTING.md) | Errores frecuentes con comandos de diagnóstico |
@@ -115,10 +120,11 @@ curl -o /dev/null -w "%{http_code}\n" http://localhost:8090/guarani/3.23/rest/ #
 
 ```
 .
-├── docker-compose.yml      # db + gestion
-├── Dockerfile              # PHP 8.1 + Apache + extensiones + Java
-├── docker/entrypoint.sh    # instalación automática y arranque
-├── scripts/                # checkout SVN, up y reset
+├── docker-compose.yml      # db + gestion + autogestion (3w)
+├── Dockerfile              # Gestión: PHP 8.1 + Apache + Java
+├── Dockerfile.3w           # Autogestión: PHP 8.1 + Apache + intl
+├── docker/entrypoint*.sh   # instalación automática y arranque
+├── scripts/                # checkout SVN (gestión y 3w), up y reset
 ├── docs/                   # documentación completa
 ├── .env.example            # plantilla sin secretos
 └── src/                    # checkout SVN (ignorado por Git)

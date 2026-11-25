@@ -45,7 +45,12 @@ POSTGRES_USER=tu_usuario_db
 POSTGRES_PASSWORD='tu_clave_db'
 
 GESTION_PORT=8090
+W3_PORT=8091
 DB_PORT_HOST=5434
+
+AUTOGESTION_ALIAS=/3w
+AUTOGESTION_UA=5
+AUTOGESTION_EMAIL_AYUDA=soporte@example.edu.ar
 
 TOBA_PASSWORD=toba
 TOBA_SALT='semilla_aleatoria_larga'
@@ -56,8 +61,10 @@ TOBA_SALT='semilla_aleatoria_larga'
 - Usar **comillas simples** en las claves: la clave de ejemplo contiene `!`, `&`, `%` y `^`.
 - `SVN_*`: credenciales reales de Colab (las mismas que se usan para el SVN).
 - `POSTGRES_*`: usuario/clave de la base local del compose. Pueden ser los mismos valores.
-- `GESTION_PORT`: puerto HTTP en el host. Cambiar si 8090 está ocupado.
+- `GESTION_PORT`: puerto HTTP de Gestión. Cambiar si 8090 está ocupado.
+- `W3_PORT`: puerto HTTP de Autogestión (3w). Cambiar si 8091 está ocupado.
 - `DB_PORT_HOST`: puerto para conectarse a Postgres desde el host. Cambiar si 5434 está ocupado.
+- `AUTOGESTION_*`: alias, unidad académica y email de ayuda del módulo 3w. Ver [3W.md](3W.md).
 - `TOBA_PASSWORD`: clave del usuario administrador `toba` de Guaraní.
 - `TOBA_SALT`: semilla interna; cambiar por una cadena aleatoria larga.
 
@@ -67,23 +74,24 @@ Verificar antes de empezar:
 
 ```bash
 # macOS / Linux
-lsof -nP -iTCP -sTCP:LISTEN | grep -E ':(8090|5434)\b'
+lsof -nP -iTCP -sTCP:LISTEN | grep -E ':(8090|8091|5434)\b'
 
 # Windows (WSL2)
-netstat -ano | findstr ":8090 :5434"
+netstat -ano | findstr ":8090 :8091 :5434"
 ```
 
-Si hay conflicto, editar `GESTION_PORT` y `DB_PORT_HOST` en `.env`. **No hace falta**
+Si hay conflicto, editar `GESTION_PORT`, `W3_PORT` y `DB_PORT_HOST` en `.env`. **No hace falta**
 tocar `docker-compose.yml`.
 
 ## 3. Descargar el código fuente
 
 ```bash
-./scripts/01-svn-checkout.sh
+./scripts/01-svn-checkout.sh          # Gestión → ./src
+./scripts/03-svn-checkout-3w.sh       # Autogestión (3w) → ./src-3w
 ```
 
-El script usa un contenedor `alpine` con `subversion`, por lo que **no hace falta instalar
-svn en la máquina**. El código queda en `./src` (~1 GB).
+Los scripts usan un contenedor `alpine` con `subversion`, por lo que **no hace falta
+instalar svn en la máquina**. El código queda en `./src` (~1 GB) y `./src-3w`.
 
 - Si el proceso se interrumpe, volver a ejecutar el script: detecta el checkout parcial y
   reanuda con `svn cleanup` + `svn update`.
@@ -113,6 +121,8 @@ En la primera ejecución verás, en orden:
 5. `Creando auditoria ...`
 6. `fop configurado ...`, `Syntax OK`, `Iniciando JavaBridge Jasper ...`
 7. `Apache iniciado. Gestión: http://localhost:8090/guarani/3.23`
+8. En `autogestion`: `La instalación de Guaraní Autogestión se realizó con éxito` y
+   `Apache de Autogestión iniciado. URL: http://localhost:8091/3w`
 
 Tiempo orientativo: 5–15 min para el checkout, 5–10 min para el build y 1–3 min para la
 instalación de la base, según conexión y máquina.
@@ -130,6 +140,9 @@ Abrir http://localhost:8090/guarani/3.23
 
 Cambiar la clave del usuario `toba` después del primer ingreso.
 
+Para Autogestión entrá en http://localhost:8091/3w con una **persona/alumno** dada de alta
+en Guaraní. El usuario `toba` es solo para Gestión. Ver [3W.md](3W.md).
+
 ## 6. Verificación
 
 ```bash
@@ -137,6 +150,10 @@ docker compose ps                                   # ambos servicios en estado 
 curl -o /dev/null -w "%{http_code}\n" http://localhost:8090/guarani/3.23/   # 200
 curl -o /dev/null -w "%{http_code}\n" http://localhost:8090/toba_editor/3.4/ # 200
 curl -o /dev/null -w "%{http_code}\n" http://localhost:8090/guarani/3.23/rest/ # 302
+curl -o /dev/null -w "%{http_code}\n" http://localhost:8091/3w/                  # 200
+
+docker compose exec -T autogestion sh -c \
+  'cd /opt/guarani-3w/bin && ./guarani test_conexion des01'   # SE CONECTO CON EXITO
 
 docker compose exec db psql -U "$POSTGRES_USER" -d guarani3 \
   -tAc "select usuario from desarrollo.apex_usuario where usuario='toba'"

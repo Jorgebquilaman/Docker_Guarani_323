@@ -29,6 +29,17 @@ docker compose exec gestion tail -50 /var/log/guarani/entrypoint.log
 docker compose exec gestion tail -30 /var/log/guarani/javabridge.log
 ```
 
+### Autogestión (3w)
+
+```bash
+docker compose logs -f autogestion
+docker compose exec autogestion tail -50 /var/log/guarani-3w/entrypoint.log
+docker compose exec autogestion sh -c 'cd /opt/guarani-3w/bin && ./guarani test_conexion des01'
+```
+
+3w reutiliza el JavaBridge de Gestión (`gestion:8081`): no hace falta iniciar otro.
+Ver [3W.md](3W.md) para los parámetros `AUTOGESTION_*`.
+
 ## Volúmenes y persistencia
 
 | Volumen | Contenido |
@@ -39,6 +50,7 @@ docker compose exec gestion tail -30 /var/log/guarani/javabridge.log
 | `guarani_temp` | temporales de la aplicación |
 | `guarani_metadatos` | metadatos compilados |
 | `guarani_fw_www`, `guarani_fw_temp` | recursos y temporales del framework |
+| `guarani_3w_instalacion` | `config.php`, `alias.conf`, `login.php` y logs de Autogestión |
 
 Apagar los contenedores, reiniciar Docker Desktop o reconstruir la imagen (`up --build`)
 **no borra** los datos: todo lo que Guaraní necesita para funcionar está en los volúmenes.

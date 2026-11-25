@@ -136,6 +136,56 @@ docker compose ps
 No hace falta `down -v`: los volúmenes se conservan y el entrypoint detecta la marca
 `.docker-instalado`, por lo que **no vuelve a instalar**.
 
+## Autogestión (3w)
+
+### La página de 3w muestra "Tiene que setear ... 'url_identidad_genero'" o "'email_ayuda'"
+
+El entrypoint agrega esos valores a `instalacion/config.php`. Si aparece el mensaje, el
+marcador `.docker-configurado` está viejo. Forzar la reconfiguración:
+
+```bash
+docker compose exec autogestion rm -f /opt/guarani-3w/instalacion/.docker-configurado
+docker compose restart autogestion
+```
+
+### "password authentication failed" en 3w
+
+El script oficial `docker-instalar` usa `sed` para reemplazar la clave en `config.php`;
+si la clave tiene `&`, `#` o `\`, el reemplazo se rompe. El entrypoint la reescribe desde
+la variable de entorno. Verificar:
+
+```bash
+docker compose exec autogestion grep -n 'pdo_passwd' /opt/guarani-3w/instalacion/config.php
+docker compose exec -T autogestion sh -c 'cd /opt/guarani-3w/bin && ./guarani test_conexion des01'
+```
+
+### 3w no levanta: `ext-intl` faltante
+
+La imagen `Dockerfile.3w` ya instala `libicu-dev` + `intl`. Si se construyó una imagen
+propia, verificar:
+
+```bash
+docker compose exec autogestion php -m | grep -i intl
+```
+
+### "La unidad académica no existe" o no se puede loguear
+
+`AUTOGESTION_UA` debe ser el id de una unidad académica real de Gestión
+(`negocio.sga_unidades_gestion`). El default `5` viene del template de SIU.
+Además hay que crear una persona con usuario/clave en Guaraní: el usuario `toba` no sirve
+para 3w. Ver [3W.md](3W.md).
+
+### Dos alias duplicados en Apache
+
+El script oficial crea `guarani-autogestion.conf` y el entrypoint crea
+`autogestion.conf`. El entrypoint ya elimina el primero. Si hay warnings `AH00671`:
+
+```bash
+docker compose exec autogestion sh -c \
+  'rm -f /etc/apache2/sites-enabled/guarani-autogestion.conf && ln -sfn /opt/guarani-3w/instalacion/alias.conf /etc/apache2/sites-enabled/autogestion.conf'
+docker compose restart autogestion
+```
+
 ## Diagnóstico general
 
 ```bash

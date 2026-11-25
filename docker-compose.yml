@@ -44,6 +44,7 @@ services:
       DB_USER: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       GESTION_PORT: ${GESTION_PORT}
+      URL_3W: "http://localhost:${W3_PORT:-8091}${AUTOGESTION_ALIAS:-/3w}"
       TOBA_PASSWORD: ${TOBA_PASSWORD}
       TOBA_SALT: ${TOBA_SALT}
     ports:
@@ -62,6 +63,42 @@ services:
       start_period: 600s
       retries: 10
 
+  autogestion:
+    build:
+      context: .
+      dockerfile: Dockerfile.3w
+    container_name: guarani_3w
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      gestion:
+        condition: service_started
+    environment:
+      TZ: America/Argentina/Buenos_Aires
+      CHULUPI_BASE_NOMBRE: ${POSTGRES_DB}
+      CHULUPI_BASE_HOST: db
+      CHULUPI_BASE_PORT: "5432"
+      CHULUPI_BASE_USER: ${POSTGRES_USER}
+      CHULUPI_BASE_PASS: ${POSTGRES_PASSWORD}
+      CHULUPI_BASE_SCHEMA: negocio
+      CHULUPI_ALIAS: ${AUTOGESTION_ALIAS:-/3w}
+      AUTOGESTION_UA: ${AUTOGESTION_UA:-5}
+      AUTOGESTION_EMAIL_AYUDA: ${AUTOGESTION_EMAIL_AYUDA:-soporte@example.edu.ar}
+      URL_GESTION: "http://localhost:${GESTION_PORT}/guarani/3.23"
+      URL_3W: "http://localhost:${W3_PORT:-8091}${AUTOGESTION_ALIAS:-/3w}"
+      DOCKER_WAIT_FOR: "1"
+    ports:
+      - "${W3_PORT:-8091}:80"
+    volumes:
+      - guarani_3w_instalacion:/opt/guarani-3w/instalacion
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost${AUTOGESTION_ALIAS:-/3w}/"]
+      interval: 30s
+      timeout: 10s
+      start_period: 300s
+      retries: 10
+
 volumes:
   guarani_pgdata:
   guarani_instalacion:
@@ -70,3 +107,4 @@ volumes:
   guarani_metadatos:
   guarani_fw_www:
   guarani_fw_temp:
+  guarani_3w_instalacion:

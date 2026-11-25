@@ -1,4 +1,6 @@
 src/.svn
 src/**/.svn
+src-3w/.svn
+src-3w/**/.svn
 .env
 *.log
