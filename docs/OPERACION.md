@@ -40,6 +40,11 @@ docker compose exec gestion tail -30 /var/log/guarani/javabridge.log
 | `guarani_metadatos` | metadatos compilados |
 | `guarani_fw_www`, `guarani_fw_temp` | recursos y temporales del framework |
 
+Apagar los contenedores, reiniciar Docker Desktop o reconstruir la imagen (`up --build`)
+**no borra** los datos: todo lo que Guaraní necesita para funcionar está en los volúmenes.
+Solo se pierde lo que hayas modificado a mano dentro del contenedor fuera de esos volúmenes
+(por ejemplo, código fuente o `menu.ini` editado directamente).
+
 `docker compose down` **no borra** estos volúmenes. Para verlos:
 
 ```bash
