@@ -4,18 +4,17 @@
 
 ```
                          host
-     ┌──────────────────┬────────────────────┬──────────────────┐
-     │  :8090           │  :8091             │  :5434           │
-     └────────┬─────────┴─────────┬──────────┴────────┬─────────┘
-              │                   │                   │
-     ┌────────▼─────────┐ ┌───────▼─────────┐ ┌───────▼──────────┐
-     │   gestion        │ │ autogestion(3w) │ │   db             │
-     │ Apache + PHP 8.1 │ │ Apache + PHP 8.1│ │ PostgreSQL 14    │
-     │ Composer + JDK   │ │ + intl + Chulupi│ │ LATIN1 / escape  │
-     │ JavaBridge :8081 │ │                 │ │                  │
-     └────────┬─────────┘ └───────┬─────────┘ └───────┬──────────┘
-              │                   │                   │
-              └───────── red interna: guarani_default ─┘
+     ┌──────────┬──────────┬──────────┬──────────┐
+     │ :8090    │ :8091    │ :8092    │ :5434    │
+     └────┬─────┴────┬─────┴────┬─────┴────┬─────┘
+          │          │          │          │
+     ┌────▼────┐┌────▼────┐┌────▼────────┐┌───▼──────────┐
+     │ gestion ││ 3w      ││preinscripcion││    db        │
+     │ PHP+JDK ││ PHP+intl││ PHP+intl    ││ PostgreSQL14 │
+     │ Jasper  ││ Chulupi ││ base propia ││ 2 bases      │
+     └────┬────┘└────┬────┘└────┬────────┘└───┬──────────┘
+          │          │          │              │
+          └───────── red interna: guarani_default ────────┘
 ```
 
 - **`db`**: `postgres:14-bookworm`. Base `guarani3`, encoding `LATIN1`, locale `C`,
@@ -27,6 +26,9 @@
   extensión `intl` (la exige `laminas/laminas-i18n`), Composer y el framework Chulupi.
   Usa la misma base `guarani3` (schemas `negocio`/`desarrollo`) y el JavaBridge de
   `gestion`. Publica `/3w` en el puerto 8091. Ver [3W.md](3W.md).
+- **`preinscripcion`**: imagen desde `Dockerfile.preinscripcion`. Tiene su **propia base**
+  `preinscripcion` en el mismo PostgreSQL, con dos alias (`/preinscripcion/iupa` y
+  `/preinscripcion_admin/iupa`) en el puerto 8092. Ver [PREINSCRIPCION.md](PREINSCRIPCION.md).
 
 ## Imagen
 
@@ -91,6 +93,8 @@
 | 3w como servicio separado | Usa el mismo `db` pero su propio Apache y configuración (`config.php`) |
 | `intl` en la imagen 3w | Lo exige `laminas/laminas-i18n` (dependencia de Chulupi) |
 | Jasper compartido | 3w apunta a `gestion:8081`; evita un segundo JavaBridge |
+| Base propia para Preinscripción | La documentación oficial exige base LATIN1 separada; se crea en el init de PostgreSQL |
+| `str_replace` en PHP para `config.php` | Evita que claves con `&`, `#` o `\` se rompan con `sed` |
 
 ## Archivos del repositorio
 
@@ -103,16 +107,22 @@
 ├── docker-compose.yml
 ├── Dockerfile            # Gestión
 ├── Dockerfile.3w         # Autogestión
+├── Dockerfile.preinscripcion
 ├── docker/
 │   ├── entrypoint.sh
 │   ├── entrypoint-3w.sh
+│   ├── entrypoint-preinscripcion.sh
+│   ├── configure-preinscripcion.php
+│   ├── db-init/          # crea la base preinscripcion
 │   └── php/guarani.ini
 ├── scripts/
 │   ├── 01-svn-checkout.sh
 │   ├── 02-up.sh
 │   ├── 03-svn-checkout-3w.sh
+│   ├── 04-svn-checkout-preinscripcion.sh
 │   └── reset.sh
 ├── docs/                 # esta documentación
 ├── src/                  # checkout SVN de Gestión (NO versionar)
-└── src-3w/               # checkout SVN de 3w (NO versionar)
+├── src-3w/               # checkout SVN de 3w (NO versionar)
+└── src-preinscripcion/   # checkout SVN de Preinscripción (NO versionar)
 ```

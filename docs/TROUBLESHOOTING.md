@@ -186,6 +186,42 @@ docker compose exec autogestion sh -c \
 docker compose restart autogestion
 ```
 
+## Preinscripción
+
+### El panel de alumnos muestra una página de error
+
+Es esperable con la base recién creada: hay que configurar los parámetros de
+**Pre Inscripción** y los turnos de presentación de documentación desde Gestión, y los
+perfiles de datos desde el panel admin. Ver
+[PREINSCRIPCION.md → Configuración pendiente desde Gestión](PREINSCRIPCION.md#configuración-pendiente-desde-gestión).
+
+### No existe la base `preinscripcion`
+
+El entrypoint la crea (LATIN1) si falta; en una instalación nueva también la crea el script
+`docker/db-init/01-create-preinscripcion.sql`. Verificar:
+
+```bash
+docker compose exec -T db psql -U "$POSTGRES_USER" -d postgres \
+  -c "select datname, pg_encoding_to_char(encoding) from pg_database where datname='preinscripcion'"
+```
+
+### `config.php` todavía tiene placeholders
+
+Si aparece `nombre_base_preinscripcion` o `[id_pto_acc]` en la configuración, forzar la
+regeneración:
+
+```bash
+docker compose exec preinscripcion rm -f /opt/preinscripcion/instalacion/.docker-instalado
+docker compose restart preinscripcion
+```
+
+El archivo se vuelve a generar desde la plantilla con los valores de `.env`.
+
+### El healthcheck de `preinscripcion` queda unhealthy
+
+Debe apuntar a `/preinscripcion/<PREINSCRIPCION_PTO>/` (no a `/preinscripcion/`).
+Comprobar con `curl -Ls -o /dev/null -w '%{http_code}' http://localhost:8092/preinscripcion/iupa/`.
+
 ## Diagnóstico general
 
 ```bash

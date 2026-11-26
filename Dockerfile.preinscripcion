@@ -1,0 +1,45 @@
+# syntax=docker/dockerfile:1.7
+FROM php:8.1-apache-bookworm
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    HOME_PREINSCRIPCION=/opt/preinscripcion \
+    TZ=America/Argentina/Buenos_Aires
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git subversion unzip zip curl ca-certificates \
+        libpq-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libzip-dev \
+        libicu-dev postgresql-client fonts-dejavu-core fonts-liberation \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j"$(nproc)" \
+        pgsql pdo_pgsql gd zip exif bcmath intl opcache \
+    && pecl install apcu \
+    && docker-php-ext-enable apcu \
+    && a2enmod rewrite setenvif headers expires \
+    && echo 'ServerName localhost' > /etc/apache2/conf-available/servername.conf \
+    && a2enconf servername \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+COPY docker/php/guarani.ini /usr/local/etc/php/conf.d/99-guarani.ini
+
+WORKDIR /opt/preinscripcion
+
+COPY src-preinscripcion/ ./
+
+RUN composer install --no-interaction --prefer-dist \
+    && if [ -f src/pers/composer.json ]; then \
+         (cd src/pers && composer install --no-interaction); \
+       fi \
+    && mkdir -p instalacion/temp instalacion/log instalacion/cache \
+        src/siu/www/temp src/siu/www/js/escalas /var/log/preinscripcion \
+    && chown -R www-data:www-data instalacion src/siu/www /var/log/preinscripcion \
+    && chmod -R g+rwX instalacion src/siu/www
+
+COPY docker/entrypoint-preinscripcion.sh /usr/local/bin/entrypoint-preinscripcion.sh
+COPY docker/configure-preinscripcion.php /usr/local/bin/configure-preinscripcion.php
+RUN chmod +x /usr/local/bin/entrypoint-preinscripcion.sh
+
+EXPOSE 80
+
+ENTRYPOINT ["/usr/local/bin/entrypoint-preinscripcion.sh"]
+CMD ["apache2-foreground"]

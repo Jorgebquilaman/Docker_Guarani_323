@@ -40,6 +40,17 @@ docker compose exec autogestion sh -c 'cd /opt/guarani-3w/bin && ./guarani test_
 3w reutiliza el JavaBridge de Gestión (`gestion:8081`): no hace falta iniciar otro.
 Ver [3W.md](3W.md) para los parámetros `AUTOGESTION_*`.
 
+### Preinscripción
+
+```bash
+docker compose logs -f preinscripcion
+docker compose exec preinscripcion tail -50 /var/log/preinscripcion/entrypoint.log
+docker compose exec -T db psql -U "$POSTGRES_USER" -d preinscripcion \
+  -c "select version_base from app_versiones_base"
+```
+
+Ver [PREINSCRIPCION.md](PREINSCRIPCION.md) para los parámetros `PREINSCRIPCION_*`.
+
 ## Volúmenes y persistencia
 
 | Volumen | Contenido |
@@ -51,6 +62,7 @@ Ver [3W.md](3W.md) para los parámetros `AUTOGESTION_*`.
 | `guarani_metadatos` | metadatos compilados |
 | `guarani_fw_www`, `guarani_fw_temp` | recursos y temporales del framework |
 | `guarani_3w_instalacion` | `config.php`, `alias.conf`, `login.php` y logs de Autogestión |
+| `guarani_preinscripcion_instalacion` | `config.php`, `alias.conf`, `login.php` y logs de Preinscripción |
 
 Apagar los contenedores, reiniciar Docker Desktop o reconstruir la imagen (`up --build`)
 **no borra** los datos: todo lo que Guaraní necesita para funcionar está en los volúmenes.

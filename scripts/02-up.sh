@@ -19,4 +19,6 @@ echo "Guaraní levantándose. Seguí el progreso con:"
 echo "  docker compose logs -f gestion"
 echo
 echo "Gestión:     http://localhost:${GESTION_PORT}/guarani/3.23  (toba / toba)"
-echo "Autogestión: http://localhost:${W3_PORT:-8091}${AUTOGESTION_ALIAS:-/3w}"
+echo "Autogestión:  http://localhost:${W3_PORT:-8091}${AUTOGESTION_ALIAS:-/3w}"
+echo "Preinscripción: http://localhost:${PREINSCRIPCION_PORT:-8092}/preinscripcion/${PREINSCRIPCION_PTO:-iupa}"
+echo "  admin -> http://localhost:${PREINSCRIPCION_PORT:-8092}/preinscripcion_admin/${PREINSCRIPCION_PTO:-iupa}"

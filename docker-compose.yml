@@ -21,6 +21,7 @@ services:
       - "${DB_PORT_HOST}:5432"
     volumes:
       - guarani_pgdata:/var/lib/postgresql/data
+      - ./docker/db-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
@@ -99,6 +100,41 @@ services:
       start_period: 300s
       retries: 10
 
+  preinscripcion:
+    build:
+      context: .
+      dockerfile: Dockerfile.preinscripcion
+    container_name: guarani_preinscripcion
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      TZ: America/Argentina/Buenos_Aires
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      PREINSCRIPCION_DB: preinscripcion
+      GESTION_DB: ${POSTGRES_DB}
+      PREINSCRIPCION_PORT: ${PREINSCRIPCION_PORT:-8092}
+      PREINSCRIPCION_PTO: ${PREINSCRIPCION_PTO:-iupa}
+      AUTOGESTION_EMAIL_AYUDA: ${AUTOGESTION_EMAIL_AYUDA:-soporte@example.edu.ar}
+      PREINSCRIPCION_ADMIN_USER: ${PREINSCRIPCION_ADMIN_USER:-admin}
+      PREINSCRIPCION_ADMIN_PASSWORD: ${PREINSCRIPCION_ADMIN_PASSWORD:-admin123}
+      URL_PREINSCRIPCION: "http://localhost:${PREINSCRIPCION_PORT:-8092}/preinscripcion/${PREINSCRIPCION_PTO:-iupa}"
+      URL_GESTION: "http://localhost:${GESTION_PORT}/guarani/3.23"
+    ports:
+      - "${PREINSCRIPCION_PORT:-8092}:80"
+    volumes:
+      - guarani_preinscripcion_instalacion:/opt/preinscripcion/instalacion
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost/preinscripcion/${PREINSCRIPCION_PTO:-iupa}/"]
+      interval: 30s
+      timeout: 10s
+      start_period: 300s
+      retries: 10
+
 volumes:
   guarani_pgdata:
   guarani_instalacion:
@@ -108,3 +144,4 @@ volumes:
   guarani_fw_www:
   guarani_fw_temp:
   guarani_3w_instalacion:
+  guarani_preinscripcion_instalacion:

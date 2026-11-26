@@ -1,5 +1,7 @@
 src/
 src-3w/
+src-preinscripcion/
 .env
 *.log
 .DS_Store
+*.rar

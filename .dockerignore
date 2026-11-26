@@ -2,5 +2,7 @@ src/.svn
 src/**/.svn
 src-3w/.svn
 src-3w/**/.svn
+src-preinscripcion/.svn
+src-preinscripcion/**/.svn
 .env
 *.log
