@@ -4,17 +4,17 @@
 
 ```
                          host
-     ┌──────────┬──────────┬──────────┬──────────┐
-     │ :8090    │ :8091    │ :8092    │ :5434    │
-     └────┬─────┴────┬─────┴────┬─────┴────┬─────┘
-          │          │          │          │
-     ┌────▼────┐┌────▼────┐┌────▼────────┐┌───▼──────────┐
-     │ gestion ││ 3w      ││preinscripcion││    db        │
-     │ PHP+JDK ││ PHP+intl││ PHP+intl    ││ PostgreSQL14 │
-     │ Jasper  ││ Chulupi ││ base propia ││ 2 bases      │
-     └────┬────┘└────┬────┘└────┬────────┘└───┬──────────┘
-          │          │          │              │
-          └───────── red interna: guarani_default ────────┘
+     ┌────────┬────────┬────────┬────────┬────────┐
+     │ :8090  │ :8091  │ :8092  │ :8093  │ :5434  │
+     └───┬────┴───┬────┴───┬────┴───┬────┴───┬────┘
+         │        │        │        │        │
+     ┌───▼───┐┌───▼───┐┌───▼────┐┌───▼───┐┌───▼─────────┐
+     │gestión││  3w   ││preinscr││ kolla ││     db      │
+     │PHP+JDK││PHP+intl││PHP+intl││PHP+xsl││ PostgreSQL14│
+     │Jasper ││Chulupi ││base    ││yarn   ││ 3 bases     │
+     └───┬───┘└───┬───┘└───┬────┘└───┬───┘└───┬─────────┘
+         │        │        │         │         │
+         └────────── red interna: guarani_default ─────────┘
 ```
 
 - **`db`**: `postgres:14-bookworm`. Base `guarani3`, encoding `LATIN1`, locale `C`,
@@ -29,6 +29,9 @@
 - **`preinscripcion`**: imagen desde `Dockerfile.preinscripcion`. Tiene su **propia base**
   `preinscripcion` en el mismo PostgreSQL, con dos alias (`/preinscripcion/iupa` y
   `/preinscripcion_admin/iupa`) en el puerto 8092. Ver [PREINSCRIPCION.md](PREINSCRIPCION.md).
+- **`kolla`**: imagen desde `Dockerfile.kolla`, construida del RAR `instalador_kolla_4.10.3.rar`.
+  Base propia `kolla`, usuario de BD dedicado, PHP con `xsl`, `intl`, `svn` y Yarn para los
+  assets. Publica `/kolla` en el puerto 8093. Ver [KOLLA.md](KOLLA.md).
 
 ## Imagen
 
@@ -95,6 +98,8 @@
 | Jasper compartido | 3w apunta a `gestion:8081`; evita un segundo JavaBridge |
 | Base propia para Preinscripción | La documentación oficial exige base LATIN1 separada; se crea en el init de PostgreSQL |
 | `str_replace` en PHP para `config.php` | Evita que claves con `&`, `#` o `\` se rompan con `sed` |
+| Usuario de BD propio para Kolla | Toba arma comandos shell con la clave; los caracteres especiales los rompen |
+| `iconv` de SQL a LATIN1 en el build de Kolla | `estructura.sql` viene en UTF-8 y la base es LATIN1 |
 
 ## Archivos del repositorio
 
@@ -108,6 +113,7 @@
 ├── Dockerfile            # Gestión
 ├── Dockerfile.3w         # Autogestión
 ├── Dockerfile.preinscripcion
+├── Dockerfile.kolla
 ├── docker/
 │   ├── entrypoint.sh
 │   ├── entrypoint-3w.sh
@@ -120,9 +126,11 @@
 │   ├── 02-up.sh
 │   ├── 03-svn-checkout-3w.sh
 │   ├── 04-svn-checkout-preinscripcion.sh
+│   ├── 05-extraer-kolla.sh
 │   └── reset.sh
 ├── docs/                 # esta documentación
 ├── src/                  # checkout SVN de Gestión (NO versionar)
 ├── src-3w/               # checkout SVN de 3w (NO versionar)
-└── src-preinscripcion/   # checkout SVN de Preinscripción (NO versionar)
+├── src-preinscripcion/   # checkout SVN de Preinscripción (NO versionar)
+└── src-kolla/            # contenido del RAR de Kolla (NO versionar)
 ```

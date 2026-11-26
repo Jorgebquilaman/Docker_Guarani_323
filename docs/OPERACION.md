@@ -51,6 +51,18 @@ docker compose exec -T db psql -U "$POSTGRES_USER" -d preinscripcion \
 
 Ver [PREINSCRIPCION.md](PREINSCRIPCION.md) para los parámetros `PREINSCRIPCION_*`.
 
+### Kolla
+
+```bash
+docker compose logs -f kolla
+docker compose exec kolla tail -50 /var/log/kolla/entrypoint.log
+docker compose exec -T db psql -U kolla -d kolla \
+  -c "select table_schema, count(*) from information_schema.tables where table_schema in ('desarrollo','kolla') group by 1"
+```
+
+Ver [KOLLA.md](KOLLA.md). Para backup de Kolla hay que incluir la base `kolla` además de
+`guarani3` y `preinscripcion`.
+
 ## Volúmenes y persistencia
 
 | Volumen | Contenido |
@@ -63,6 +75,7 @@ Ver [PREINSCRIPCION.md](PREINSCRIPCION.md) para los parámetros `PREINSCRIPCION_
 | `guarani_fw_www`, `guarani_fw_temp` | recursos y temporales del framework |
 | `guarani_3w_instalacion` | `config.php`, `alias.conf`, `login.php` y logs de Autogestión |
 | `guarani_preinscripcion_instalacion` | `config.php`, `alias.conf`, `login.php` y logs de Preinscripción |
+| `guarani_kolla_instalacion` | `instalacion.ini`, `bases.ini`, `toba.conf` y logs de Kolla |
 
 Apagar los contenedores, reiniciar Docker Desktop o reconstruir la imagen (`up --build`)
 **no borra** los datos: todo lo que Guaraní necesita para funcionar está en los volúmenes.

@@ -7,7 +7,7 @@
 <img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
 <img src="https://img.shields.io/badge/arm64%20%7C%20amd64-4C1?style=for-the-badge" alt="Arquitecturas">
 
-# 🐘 SIU-Guaraní Gestión + Autogestión + Preinscripción en Docker
+# 🐘 SIU-Guaraní Gestión + Autogestión + Preinscripción + Kolla en Docker
 
 **Entorno local completo, reproducible y listo para usar en macOS, Linux o Windows (WSL2).**
 
@@ -21,7 +21,7 @@
 
 | | |
 |---|---|
-| 🧱 **Cuatro servicios** | PostgreSQL 14 + Gestión + Autogestión 3w + Preinscripción (cada módulo con su Apache) |
+| 🧱 **Cinco servicios** | PostgreSQL 14 + Gestión + Autogestión 3w + Preinscripción + Kolla (cada módulo con su Apache) |
 | 📦 **Instalación automática** | Toba, carga del proyecto, esquema de negocio y auditoría en el primer arranque |
 | 🔁 **Idempotente** | Los reinicios y las reconstrucciones no reinstalan ni pierden datos |
 | 🌐 **Todo publicado** | Gestión, editor, API REST y JavaBridge de reportes |
@@ -49,6 +49,7 @@ cp .env.example .env
 ./scripts/01-svn-checkout.sh
 ./scripts/03-svn-checkout-3w.sh   # Autogestión (3w)
 ./scripts/04-svn-checkout-preinscripcion.sh  # Preinscripción
+./scripts/05-extraer-kolla.sh                # Kolla (desde el .rar descargado)
 
 # 4. Construir y levantar
 ./scripts/02-up.sh
@@ -80,11 +81,12 @@ Cuando aparezca `Apache iniciado. Gestión: http://localhost:8090/guarani/3.23`,
 | 🎓 **Autogestión (3w)** | http://localhost:8091/3w | Usuario de alumno/persona de Guaraní |
 | 📝 **Preinscripción (alumno)** | http://localhost:8092/preinscripcion/iupa | Se crea desde el alta de preinscripción |
 | 🛡️ **Preinscripción (admin)** | http://localhost:8092/preinscripcion_admin/iupa | `admin` / `admin123` (configurable en `.env`) |
+| 📊 **Kolla** | http://localhost:8093/kolla | `toba` / `toba123*-a` (configurable en `.env`) |
 | 🛠️ **Editor Toba** | http://localhost:8090/toba_editor/3.4 | `toba` / `toba` |
 | 🔌 **API REST** | http://localhost:8090/guarani/3.23/rest/ | Requiere configuración OAuth |
 | 🗄️ **PostgreSQL** | `localhost:5434` · base `guarani3` | Las de `.env` |
 
-> ¿Puerto ocupado? Cambiá `GESTION_PORT`, `W3_PORT`, `PREINSCRIPCION_PORT` y `DB_PORT_HOST` en `.env`. No hace falta tocar el `docker-compose.yml`.
+> ¿Puerto ocupado? Cambiá `GESTION_PORT`, `W3_PORT`, `PREINSCRIPCION_PORT`, `KOLLA_PORT` y `DB_PORT_HOST` en `.env`. No hace falta tocar el `docker-compose.yml`.
 > Para entrar a 3w necesitás una persona con usuario en Guaraní; en Preinscripción el administrador se crea automáticamente.
 
 ---
@@ -98,6 +100,7 @@ curl -o /dev/null -w "%{http_code}\n" http://localhost:8090/toba_editor/3.4/ # 2
 curl -o /dev/null -w "%{http_code}\n" http://localhost:8090/guarani/3.23/rest/ # 302
 curl -o /dev/null -w "%{http_code}\n" http://localhost:8091/3w/                  # 200
 curl -Ls -o /dev/null -w "%{http_code}\n" http://localhost:8092/preinscripcion_admin/iupa/  # 200
+curl -o /dev/null -w "%{http_code}\n" http://localhost:8093/kolla/                         # 200
 ```
 
 - [x] Checkout SVN de la revisión publicada
@@ -114,6 +117,7 @@ curl -Ls -o /dev/null -w "%{http_code}\n" http://localhost:8092/preinscripcion_a
 | 📥 [Instalación](docs/INSTALACION.md) | Requisitos, credenciales, `.env`, puertos, macOS/Linux/WSL2 y publicación en GitHub |
 | 🎓 [Autogestión 3w](docs/3W.md) | Instalación, configuración, unidad académica, reportes y verificación |
 | 📝 [Preinscripción](docs/PREINSCRIPCION.md) | Base propia, puntos de acceso, usuario admin y configuración desde Gestión |
+| 📊 [Kolla](docs/KOLLA.md) | Instalador del RAR, base propia, encoding, usuario admin y habilitaciones públicas |
 | ⚙️ [Operación](docs/OPERACION.md) | Comandos diarios, logs, backups, updates, reset, cron y API REST |
 | 🏗️ [Arquitectura](docs/ARQUITECTURA.md) | Servicios, imagen, flujo del entrypoint, alias y decisiones |
 | 🩺 [Troubleshooting](docs/TROUBLESHOOTING.md) | Errores frecuentes con comandos de diagnóstico |
@@ -129,9 +133,10 @@ curl -Ls -o /dev/null -w "%{http_code}\n" http://localhost:8092/preinscripcion_a
 ├── Dockerfile              # Gestión: PHP 8.1 + Apache + Java
 ├── Dockerfile.3w           # Autogestión: PHP 8.1 + Apache + intl
 ├── Dockerfile.preinscripcion
+├── Dockerfile.kolla        # Kolla: PHP 8.1 + xsl + yarn
 ├── docker/entrypoint*.sh   # instalación automática y arranque
 ├── docker/db-init/         # crea la base "preinscripcion" en el init de PostgreSQL
-├── scripts/                # checkout SVN (3 módulos), up y reset
+├── scripts/                # checkout SVN, extracción del RAR, up y reset
 ├── docs/                   # documentación completa
 ├── .env.example            # plantilla sin secretos
 └── src/                    # checkout SVN (ignorado por Git)

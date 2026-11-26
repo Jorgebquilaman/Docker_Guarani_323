@@ -57,6 +57,12 @@ PREINSCRIPCION_PTO=iupa
 PREINSCRIPCION_ADMIN_USER=admin
 PREINSCRIPCION_ADMIN_PASSWORD=cambiar-clave-admin
 
+KOLLA_PORT=8093
+KOLLA_ALIAS=/kolla
+KOLLA_PASSWORD=toba123*-a
+KOLLA_DB_USER=kolla
+KOLLA_DB_PASSWORD=kolla123
+
 TOBA_PASSWORD=toba
 TOBA_SALT='semilla_aleatoria_larga'
 ```
@@ -71,6 +77,7 @@ TOBA_SALT='semilla_aleatoria_larga'
 - `DB_PORT_HOST`: puerto para conectarse a Postgres desde el host. Cambiar si 5434 está ocupado.
 - `AUTOGESTION_*`: alias, unidad académica y email de ayuda del módulo 3w. Ver [3W.md](3W.md).
 - `PREINSCRIPCION_*`: puerto, punto de acceso y usuario admin de Preinscripción. Ver [PREINSCRIPCION.md](PREINSCRIPCION.md).
+- `KOLLA_*`: puerto, alias, clave del admin y usuario/clave de su base. Ver [KOLLA.md](KOLLA.md).
 - `TOBA_PASSWORD`: clave del usuario administrador `toba` de Guaraní.
 - `TOBA_SALT`: semilla interna; cambiar por una cadena aleatoria larga.
 
@@ -80,14 +87,14 @@ Verificar antes de empezar:
 
 ```bash
 # macOS / Linux
-lsof -nP -iTCP -sTCP:LISTEN | grep -E ':(8090|8091|8092|5434)\b'
+lsof -nP -iTCP -sTCP:LISTEN | grep -E ':(8090|8091|8092|8093|5434)\b'
 
 # Windows (WSL2)
-netstat -ano | findstr ":8090 :8091 :8092 :5434"
+netstat -ano | findstr ":8090 :8091 :8092 :8093 :5434"
 ```
 
-Si hay conflicto, editar `GESTION_PORT`, `W3_PORT`, `PREINSCRIPCION_PORT` y `DB_PORT_HOST`
-en `.env`. **No hace falta** tocar `docker-compose.yml`.
+Si hay conflicto, editar `GESTION_PORT`, `W3_PORT`, `PREINSCRIPCION_PORT`, `KOLLA_PORT` y
+`DB_PORT_HOST` en `.env`. **No hace falta** tocar `docker-compose.yml`.
 
 ## 3. Descargar el código fuente
 
@@ -95,6 +102,9 @@ en `.env`. **No hace falta** tocar `docker-compose.yml`.
 ./scripts/01-svn-checkout.sh          # Gestión → ./src
 ./scripts/03-svn-checkout-3w.sh       # Autogestión (3w) → ./src-3w
 ./scripts/04-svn-checkout-preinscripcion.sh  # Preinscripción → ./src-preinscripcion
+
+# Kolla: poner instalador_kolla_4.10.3.rar en la raíz del proyecto
+./scripts/05-extraer-kolla.sh              # → ./src-kolla
 ```
 
 Los scripts usan un contenedor `alpine` con `subversion`, por lo que **no hace falta
@@ -132,6 +142,8 @@ En la primera ejecución verás, en orden:
    `Apache de Autogestión iniciado. URL: http://localhost:8091/3w`
 9. En `preinscripcion`: creación de la base, carga del esquema 3.23.0, creación del
    usuario admin y `Apache de Preinscripcion iniciado.`
+10. En `kolla`: creación del rol/base, instalación Toba, carga de datos y
+    `Apache de Kolla iniciado.`
 
 Tiempo orientativo: 5–15 min para el checkout, 5–10 min para el build y 1–3 min para la
 instalación de la base, según conexión y máquina.
@@ -156,6 +168,9 @@ Para Preinscripción: alumnos en http://localhost:8092/preinscripcion/iupa y pan
 administración en http://localhost:8092/preinscripcion_admin/iupa (`admin` / la clave de
 `.env`). Ver [PREINSCRIPCION.md](PREINSCRIPCION.md).
 
+Kolla está en http://localhost:8093/kolla (`toba` / la clave de `KOLLA_PASSWORD`).
+Ver [KOLLA.md](KOLLA.md).
+
 ## 6. Verificación
 
 ```bash
@@ -165,6 +180,7 @@ curl -o /dev/null -w "%{http_code}\n" http://localhost:8090/toba_editor/3.4/ # 2
 curl -o /dev/null -w "%{http_code}\n" http://localhost:8090/guarani/3.23/rest/ # 302
 curl -o /dev/null -w "%{http_code}\n" http://localhost:8091/3w/                  # 200
 curl -Ls -o /dev/null -w "%{http_code}\n" http://localhost:8092/preinscripcion_admin/iupa/ # 200
+curl -o /dev/null -w "%{http_code}\n" http://localhost:8093/kolla/                         # 200
 
 docker compose exec -T db psql -U "$POSTGRES_USER" -d preinscripcion \
   -tAc "select version_base from app_versiones_base"   # 3.23.0

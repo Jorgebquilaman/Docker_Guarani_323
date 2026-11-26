@@ -135,6 +135,41 @@ services:
       start_period: 300s
       retries: 10
 
+  kolla:
+    build:
+      context: .
+      dockerfile: Dockerfile.kolla
+    container_name: guarani_kolla
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      TZ: America/Argentina/Buenos_Aires
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      PG_ADMIN_USER: ${POSTGRES_USER}
+      PG_ADMIN_PASSWORD: ${POSTGRES_PASSWORD}
+      KOLLA_DB: kolla
+      KOLLA_DB_USER: ${KOLLA_DB_USER:-kolla}
+      KOLLA_DB_PASSWORD: ${KOLLA_DB_PASSWORD:-kolla123}
+      PGCLIENTENCODING: UTF8
+      KOLLA_PORT: ${KOLLA_PORT:-8093}
+      KOLLA_ALIAS: ${KOLLA_ALIAS:-/kolla}
+      KOLLA_PASSWORD: ${KOLLA_PASSWORD:-toba123*-a}
+    ports:
+      - "${KOLLA_PORT:-8093}:80"
+    volumes:
+      - guarani_kolla_instalacion:/opt/kolla/instalacion
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost${KOLLA_ALIAS:-/kolla}/"]
+      interval: 30s
+      timeout: 10s
+      start_period: 600s
+      retries: 10
+
 volumes:
   guarani_pgdata:
   guarani_instalacion:
@@ -145,3 +180,4 @@ volumes:
   guarani_fw_temp:
   guarani_3w_instalacion:
   guarani_preinscripcion_instalacion:
+  guarani_kolla_instalacion:

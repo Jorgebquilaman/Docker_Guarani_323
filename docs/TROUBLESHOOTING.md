@@ -222,6 +222,46 @@ El archivo se vuelve a generar desde la plantilla con los valores de `.env`.
 Debe apuntar a `/preinscripcion/<PREINSCRIPCION_PTO>/` (no a `/preinscripcion/`).
 Comprobar con `curl -Ls -o /dev/null -w '%{http_code}' http://localhost:8092/preinscripcion/iupa/`.
 
+## Kolla
+
+### Falta el RAR o `src-kolla/`
+
+Kolla no se baja por SVN: hay que poner `instalador_kolla_4.10.3.rar` en la raíz y correr
+`./scripts/05-extraer-kolla.sh`. El RAR está ignorado por Git.
+
+### Error `value too long for type character varying(30)` al instalar
+
+Los SQL del RAR mezclan codificaciones: `db/estructura.sql` es UTF-8 y la base es LATIN1.
+El `Dockerfile.kolla` convierte todos los SQL UTF-8 a LATIN1 con `iconv` durante el build.
+Si se construyó una imagen propia, verificar:
+
+```bash
+docker compose exec kolla file -b -I /opt/kolla/db/estructura.sql   # iso-8859-1
+```
+
+### Falta `apex_proyecto` o `apex_puntos_montaje`
+
+La metadata Toba no se cargó. Reiniciar la instalación desde cero:
+
+```bash
+docker compose stop kolla
+docker compose exec -T db psql -U sarnal -d postgres -c 'DROP DATABASE IF EXISTS kolla'
+docker compose exec -T db psql -U sarnal -d postgres -c "CREATE DATABASE kolla OWNER kolla ENCODING 'LATIN1' TEMPLATE template0 LC_COLLATE 'C' LC_CTYPE 'C'"
+docker run --rm -v guarani_guarani_kolla_instalacion:/data alpine sh -c 'rm -rf /data/* /data/.[!.]* 2>/dev/null || true'
+docker compose up -d --build kolla
+```
+
+### CSS/JS 404 en `/kolla/toba/...`
+
+Faltan los assets de Yarn. El build ejecuta los `post-install-cmd` del framework y de
+`manejador-salida-bootstrap`; verificar que `nodejs`, `yarn` y esos scripts estén en el
+`Dockerfile.kolla`, y reconstruir la imagen.
+
+### Clave del admin muy corta
+
+El instalador exige al menos 8 caracteres para `KOLLA_PASSWORD`. Usar por defecto
+`toba123*-a` (configurable en `.env`).
+
 ## Diagnóstico general
 
 ```bash

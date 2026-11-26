@@ -1,6 +1,7 @@
 src/
 src-3w/
 src-preinscripcion/
+src-kolla/
 .env
 *.log
 .DS_Store
