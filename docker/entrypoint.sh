@@ -101,6 +101,29 @@ instalar_segun_documentacion() {
     ./guarani crear_auditoria -f guarani
 }
 
+asegurar_rol_alimentarte() {
+    if ! PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" \
+          -U "$DB_USER" -d postgres -tAc \
+          "select 1 from pg_roles where rolname = '$ALIMENTARTE_DB_USER'" \
+          | grep -q 1; then
+        log "Creando rol de solo lectura $ALIMENTARTE_DB_USER ..."
+        PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" \
+          -U "$DB_USER" -d postgres -v ON_ERROR_STOP=1 -c \
+          "CREATE ROLE $ALIMENTARTE_DB_USER LOGIN PASSWORD '$ALIMENTARTE_DB_PASSWORD'"
+    fi
+    PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" \
+      -U "$DB_USER" -d postgres -v ON_ERROR_STOP=1 \
+      -c "GRANT CONNECT ON DATABASE $DB_NAME TO $ALIMENTARTE_DB_USER" \
+      >/dev/null
+
+    # Los permisos de esquema se dan dentro de la base de negocio, ya cargada.
+    PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" \
+      -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 \
+      -c "GRANT USAGE ON SCHEMA negocio TO $ALIMENTARTE_DB_USER" \
+      -c "GRANT SELECT ON negocio.mdp_personas, negocio.mdp_personas_contactos, negocio.mdp_personas_documentos, negocio.sga_alumnos TO $ALIMENTARTE_DB_USER" \
+      >/dev/null
+}
+
 configurar_menu() {
     # La plantilla trae 'menu = #' (valor inválido): se reemplaza por menú KDE (2).
     if ! grep -qE '^menu[[:space:]]*=[[:space:]]*[012][[:space:]]*$' "$PROJECT/menu.ini" 2>/dev/null; then
@@ -185,6 +208,8 @@ else
     touch "$MARKER"
     log "Instalacion finalizada."
 fi
+
+asegurar_rol_alimentarte
 
 # Configuraciones idempotentes (tambien en reinicios)
 configurar_menu

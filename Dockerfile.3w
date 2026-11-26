@@ -27,6 +27,9 @@ WORKDIR /opt/guarani-3w
 
 COPY src-3w/ ./
 
+# Personalización institucional: vive fuera del checkout SVN para que svn update no la borre.
+COPY 3w-pers/iupa/ src/pers/iupa/
+
 # Se instalan también las personalizaciones: el script oficial docker-instalar
 # ejecuta composer install en todos los composer.json del proyecto.
 RUN composer install --no-interaction --prefer-dist \

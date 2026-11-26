@@ -124,6 +124,7 @@ curl -o /dev/null -w "%{http_code}\n" http://localhost:8094/tehuelche/          
 | 📝 [Preinscripción](docs/PREINSCRIPCION.md) | Base propia, puntos de acceso, usuario admin y configuración desde Gestión |
 | 📊 [Kolla](docs/KOLLA.md) | Instalador del RAR, base propia, encoding, usuario admin y habilitaciones públicas |
 | 🎓 [Tehuelche](docs/TEHUELCHE.md) | Instalador del RAR, base propia, esquemas, usuario admin e integración con Guaraní |
+| 🔗 [Alimentarte ↔ 3w](docs/INTEGRACION_ALIMENTARTE.md) | Login con DNI de Guaraní, SSO y botón en Autogestión 3w |
 | ⚙️ [Operación](docs/OPERACION.md) | Comandos diarios, logs, backups, updates, reset, cron y API REST |
 | 🏗️ [Arquitectura](docs/ARQUITECTURA.md) | Servicios, imagen, flujo del entrypoint, alias y decisiones |
 | 🩺 [Troubleshooting](docs/TROUBLESHOOTING.md) | Errores frecuentes con comandos de diagnóstico |
@@ -144,6 +145,7 @@ curl -o /dev/null -w "%{http_code}\n" http://localhost:8094/tehuelche/          
 ├── docker/entrypoint*.sh   # instalación automática y arranque
 ├── docker/db-init/         # crea la base "preinscripcion" en el init de PostgreSQL
 ├── scripts/                # checkout SVN, extracción de RARs, up y reset
+├── 3w-pers/iupa/           # personalización: botón "Alimentarte" en 3w
 ├── instaladores/           # colocar los RAR aquí (o en la raíz); ignorado por Git
 ├── docs/                   # documentación completa
 ├── .env.example            # plantilla sin secretos

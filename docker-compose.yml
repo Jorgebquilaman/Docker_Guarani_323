@@ -46,6 +46,8 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       GESTION_PORT: ${GESTION_PORT}
       URL_3W: "http://localhost:${W3_PORT:-8091}${AUTOGESTION_ALIAS:-/3w}"
+      ALIMENTARTE_DB_USER: ${ALIMENTARTE_DB_USER:-alimentarte_guarani}
+      ALIMENTARTE_DB_PASSWORD: ${ALIMENTARTE_DB_PASSWORD:-alimentarte123}
       TOBA_PASSWORD: ${TOBA_PASSWORD}
       TOBA_SALT: ${TOBA_SALT}
     ports:
@@ -88,6 +90,8 @@ services:
       AUTOGESTION_EMAIL_AYUDA: ${AUTOGESTION_EMAIL_AYUDA:-soporte@example.edu.ar}
       URL_GESTION: "http://localhost:${GESTION_PORT}/guarani/3.23"
       URL_3W: "http://localhost:${W3_PORT:-8091}${AUTOGESTION_ALIAS:-/3w}"
+      ALIMENTARTE_SSO_SECRET: ${ALIMENTARTE_SSO_SECRET}
+      ALIMENTARTE_SSO_URL: ${ALIMENTARTE_SSO_URL:-http://localhost:5173/sso}
       DOCKER_WAIT_FOR: "1"
     ports:
       - "${W3_PORT:-8091}:80"

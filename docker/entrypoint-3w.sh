@@ -53,6 +53,21 @@ ajustar_config() {
     log "config.php ajustado (ua=${AUTOGESTION_UA}, jasper=gestion:8081, captcha off)."
 }
 
+configurar_personalizacion() {
+    # Activa la personalización "iupa" sin sobrescribir el resto de config.php.
+    local cfg="$PROJECT/instalacion/config.php"
+    [ -f "$cfg" ] || return 0
+    php -r '
+        $archivo = $GLOBALS["argv"][1];
+        $config = require $archivo;
+        $config["global"]["usar_personalizaciones"] = true;
+        $config["global"]["accesos"]["des01"]["personalizacion"] = "iupa";
+        file_put_contents($archivo, "<?php\nreturn " . var_export($config, true) . ";\n");
+    ' "$cfg"
+    chown www-data:www-data "$cfg"
+    log "Personalización iupa activada en 3w."
+}
+
 arreglar_permisos() {
     local dirs=(
         "$PROJECT/instalacion/log"
@@ -80,6 +95,7 @@ if [ ! -f "$MARKER" ]; then
     ajustar_config
 fi
 
+configurar_personalizacion
 arreglar_permisos
 
 # El script oficial crea guarani-autogestion.conf; nos quedamos con un solo alias.
