@@ -2,16 +2,26 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-RAR_FILE="${KOLLA_RAR:-instalador_kolla_4.10.3.rar}"
+RAR_NAME="instalador_kolla_4.10.3.rar"
+RAR_FILE="${KOLLA_RAR:-}"
 
 if [ -f src-kolla/composer.json ]; then
     echo "Kolla ya está extraído en ./src-kolla."
     exit 0
 fi
 
+# Se busca primero en instaladores/ y luego en la raíz del proyecto.
+if [ -z "$RAR_FILE" ]; then
+    if [ -f "instaladores/$RAR_NAME" ]; then
+        RAR_FILE="instaladores/$RAR_NAME"
+    else
+        RAR_FILE="$RAR_NAME"
+    fi
+fi
+
 if [ ! -f "$RAR_FILE" ]; then
-    echo "No encuentro $RAR_FILE en la raíz del proyecto."
-    echo "Descargalo del Portal de Servicios de Comunidad del SIU y ponelo acá."
+    echo "No encuentro $RAR_NAME."
+    echo "Ponelo en ./instaladores/ o en la raíz del proyecto (descargalo del Portal de Servicios de Comunidad del SIU)."
     exit 1
 fi
 

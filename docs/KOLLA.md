@@ -1,7 +1,8 @@
 # SIU-Kolla 4.10.3
 
 Módulo de encuestas integrado desde el archivo **`instalador_kolla_4.10.3.rar`**
-descargado del Portal de Servicios de Comunidad del SIU, siguiendo la
+(colocarlo en `instaladores/` o en la raíz del proyecto), descargado del Portal de Servicios
+de Comunidad del SIU, siguiendo la
 [guía oficial de instalación desde cero](https://documentacion.siu.edu.ar/wiki/SIU-Kolla/Version_4.10.0/instalacion_desde_cero).
 
 ## Cómo se integró

@@ -1,7 +1,8 @@
 # SIU-Tehuelche 4.5.2
 
 Módulo de gestión de becas integrado desde **`instalador_tehuelche_4.5.2.rar`**
-(Portal de Servicios de Comunidad del SIU), siguiendo la
+(colocarlo en `instaladores/` o en la raíz del proyecto), del Portal de Servicios de
+Comunidad del SIU, siguiendo la
 [guía oficial de instalación de 4.5](https://documentacion.siu.edu.ar/wiki/SIU-Tehuelche/version_4.5/instalacion).
 
 ## Cómo se integró

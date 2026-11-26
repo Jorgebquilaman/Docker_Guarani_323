@@ -34,7 +34,7 @@ Código fuente: `nodos/iupa/gestion/trunk/3.23.0` del repositorio Colab.
 
 ## 🚀 Inicio rápido
 
-> **Requisitos previos:** Docker con Compose v2, ~15 GB libres, credenciales de Colab con acceso al nodo `iupa` y los instaladores `instalador_kolla_4.10.3.rar` e `instalador_tehuelche_4.5.2.rar` en la raíz del proyecto (se descargan del Portal de Servicios de Comunidad del SIU).
+> **Requisitos previos:** Docker con Compose v2, ~15 GB libres, credenciales de Colab con acceso al nodo `iupa` y los instaladores `instalador_kolla_4.10.3.rar` e `instalador_tehuelche_4.5.2.rar` dentro de `instaladores/` (o en la raíz; se descargan del Portal de Servicios de Comunidad del SIU).
 
 ```bash
 # 1. Clonar y entrar
@@ -49,8 +49,8 @@ cp .env.example .env
 ./scripts/01-svn-checkout.sh
 ./scripts/03-svn-checkout-3w.sh   # Autogestión (3w)
 ./scripts/04-svn-checkout-preinscripcion.sh  # Preinscripción
-./scripts/05-extraer-kolla.sh                # Kolla (desde el .rar descargado)
-./scripts/06-extraer-tehuelche.sh            # Tehuelche (desde el .rar descargado)
+./scripts/05-extraer-kolla.sh                # Kolla (lee instaladores/*.rar o la raíz)
+./scripts/06-extraer-tehuelche.sh            # Tehuelche (ídem)
 
 # 4. Construir y levantar
 ./scripts/02-up.sh
@@ -143,7 +143,8 @@ curl -o /dev/null -w "%{http_code}\n" http://localhost:8094/tehuelche/          
 ├── Dockerfile.tehuelche    # Tehuelche: PHP 8.1 + xsl + yarn
 ├── docker/entrypoint*.sh   # instalación automática y arranque
 ├── docker/db-init/         # crea la base "preinscripcion" en el init de PostgreSQL
-├── scripts/                # checkout SVN, extracción del RAR, up y reset
+├── scripts/                # checkout SVN, extracción de RARs, up y reset
+├── instaladores/           # colocar los RAR aquí (o en la raíz); ignorado por Git
 ├── docs/                   # documentación completa
 ├── .env.example            # plantilla sin secretos
 └── src*/                   # src, src-3w, src-preinscripcion, src-kolla, src-tehuelche

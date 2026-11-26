@@ -242,8 +242,8 @@ Comprobar con `curl -Ls -o /dev/null -w '%{http_code}' http://localhost:8092/pre
 
 ### Falta el RAR o `src-kolla/`
 
-Kolla no se baja por SVN: hay que poner `instalador_kolla_4.10.3.rar` en la raíz y correr
-`./scripts/05-extraer-kolla.sh`. El RAR está ignorado por Git.
+Kolla no se baja por SVN: hay que poner `instalador_kolla_4.10.3.rar` en `instaladores/`
+(o en la raíz) y correr `./scripts/05-extraer-kolla.sh`. El RAR está ignorado por Git.
 
 ### Error `value too long for type character varying(30)` al instalar
 
@@ -282,7 +282,7 @@ El instalador exige al menos 8 caracteres para `KOLLA_PASSWORD`. Usar por defect
 
 ### Falta el RAR o `src-tehuelche/`
 
-Poner `instalador_tehuelche_4.5.2.rar` en la raíz y ejecutar
+Poner `instalador_tehuelche_4.5.2.rar` en `instaladores/` (o en la raíz) y ejecutar
 `./scripts/06-extraer-tehuelche.sh`. El RAR y `src-tehuelche/` están ignorados por Git.
 
 ### El instalador dice que ya existe una instalación

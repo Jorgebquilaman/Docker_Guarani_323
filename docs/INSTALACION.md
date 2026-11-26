@@ -26,7 +26,7 @@ de Docker.
 | Disco | ~15 GB libres (checkouts SVN ~1 GB, RARs, cinco imágenes, volúmenes y caché) |
 | Red | Acceso a `colab.siu.edu.ar`, `satis.siu.edu.ar`, `api.github.com`, `registry.npmjs.org`, `deb.debian.org` y Docker Hub |
 | Credenciales | Usuario/clave de **Colab** con acceso a `nodos/iupa` |
-| Instaladores RAR | `instalador_kolla_4.10.3.rar` e `instalador_tehuelche_4.5.2.rar` del Portal de Servicios de Comunidad del SIU |
+| Instaladores RAR | `instalador_kolla_4.10.3.rar` e `instalador_tehuelche_4.5.2.rar` del Portal de Servicios de Comunidad del SIU; colocarlos en `./instaladores/` (o en la raíz) |
 
 > Las imágenes base tienen variante **arm64** y **amd64**: funcionan tanto en Apple Silicon
 > como en Intel/PC sin emulación.
@@ -40,7 +40,9 @@ falta de permisos sobre esa ruta.
 
 Kolla y Tehuelche **no se bajan por SVN**: sus instaladores RAR se descargan del
 [Portal de Servicios de Comunidad](https://herramientas.comunidad.siu.edu.ar) y se colocan
-en la raíz del proyecto. No se versionan.
+en `./instaladores/` (recomendado) o directamente en la raíz del proyecto. Los scripts los
+buscan en ese orden. No se versionan (`*.rar` está en `.gitignore`), por lo que cada persona
+debe descargarlos al clonar el repo.
 
 ## 2. Preparar el proyecto
 
@@ -128,10 +130,10 @@ Si hay conflicto, editar `GESTION_PORT`, `W3_PORT`, `PREINSCRIPCION_PORT`, `KOLL
 ./scripts/03-svn-checkout-3w.sh       # Autogestión (3w) → ./src-3w
 ./scripts/04-svn-checkout-preinscripcion.sh  # Preinscripción → ./src-preinscripcion
 
-# Kolla: poner instalador_kolla_4.10.3.rar en la raíz del proyecto
+# Kolla: poner instalador_kolla_4.10.3.rar en ./instaladores/ (o en la raíz)
 ./scripts/05-extraer-kolla.sh              # → ./src-kolla
 
-# Tehuelche: poner instalador_tehuelche_4.5.2.rar en la raíz del proyecto
+# Tehuelche: poner instalador_tehuelche_4.5.2.rar en ./instaladores/ (o en la raíz)
 ./scripts/06-extraer-tehuelche.sh          # → ./src-tehuelche
 ```
 
