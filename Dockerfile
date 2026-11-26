@@ -10,7 +10,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         git subversion unzip zip curl ca-certificates \
         libpq-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libzip-dev \
         default-jre-headless graphviz fonts-dejavu-core fonts-liberation \
-        postgresql-client cron \
+        postgresql-client cron nodejs npm \
+    && npm install -g yarn \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" \
         pgsql pdo_pgsql gd zip exif bcmath opcache \
@@ -34,6 +35,7 @@ RUN composer install --no-dev --prefer-dist --no-scripts --no-autoloader --no-in
 COPY src/ ./
 RUN composer dump-autoload --optimize --no-scripts \
     && php -r 'require "vendor/autoload.php"; \SIU\Guarani\Scripts\Composer::postInstallCmd();' \
+    && composer run-script post-install-cmd -d vendor/siu-toba/framework/ --no-interaction \
     && printf 'menu=2\n' > menu.ini \
     && mkdir -p instalacion www temp metadatos_compilados /var/log/guarani \
     && chown -R www-data:www-data instalacion www temp metadatos_compilados \

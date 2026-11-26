@@ -57,8 +57,6 @@ services:
       - guarani_www:/opt/guarani/www
       - guarani_temp:/opt/guarani/temp
       - guarani_metadatos:/opt/guarani/metadatos_compilados
-      - guarani_fw_www:/opt/guarani/vendor/siu-toba/framework/www
-      - guarani_fw_temp:/opt/guarani/vendor/siu-toba/framework/temp
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost/guarani/3.23/"]
       interval: 30s
@@ -214,8 +212,6 @@ volumes:
   guarani_www:
   guarani_temp:
   guarani_metadatos:
-  guarani_fw_www:
-  guarani_fw_temp:
   guarani_3w_instalacion:
   guarani_preinscripcion_instalacion:
   guarani_kolla_instalacion:

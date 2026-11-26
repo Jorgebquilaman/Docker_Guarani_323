@@ -54,6 +54,31 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8090/guarani/3.23/
 El entrypoint ya lo corrige solo en cada arranque; si aparece de nuevo, verificar que la
 imagen esté actualizada (`./scripts/02-up.sh`).
 
+## Consola del editor: `$ is not defined` en `tipclick.js`
+
+Síntoma: en `http://localhost:8090/toba_editor/3.4/` aparece
+`Uncaught ReferenceError: $ is not defined` en `tipclick.js:110` al pasar el mouse por
+los ítems del menú, y las ayudas (tooltips) no se muestran.
+
+Causa: `tipclick.js` usa jQuery y Toba lo carga desde
+`/toba_guarani3/js/packages/jquery/dist/jquery.min.js`. Ese directorio lo genera el
+`post-install-cmd` del framework con **yarn**; el build original de Gestión usaba
+`composer install --no-scripts`, así que los paquetes JS nunca se instalaron.
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' \
+  http://localhost:8090/toba_guarani3/js/packages/jquery/dist/jquery.min.js   # esperado: 200
+```
+
+Ya corregido: el `Dockerfile` instala `nodejs`/`yarn` y ejecuta
+`composer run-script post-install-cmd -d vendor/siu-toba/framework/`, y
+`docker-compose.yml` no monta un volumen sobre `framework/www` (que tapaba los archivos
+de la imagen). Si vuelve a aparecer, reconstruir:
+
+```bash
+docker compose up -d --build gestion
+```
+
 ## Error de conexión a PostgreSQL durante la instalación
 
 ```bash
