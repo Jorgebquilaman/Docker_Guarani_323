@@ -90,7 +90,7 @@ Ver [TEHUELCHE.md](TEHUELCHE.md). El backup debe incluir también la base `tehue
 | `guarani_tehuelche_instalacion` | `instalacion.ini`, `bases.ini`, `toba.conf` y logs de Tehuelche |
 
 Apagar los contenedores, reiniciar Docker Desktop o reconstruir la imagen (`up --build`)
-**no borra** los datos: todo lo que Guaraní necesita para funcionar está en los volúmenes.
+**no borra** los datos: todo lo que los cinco módulos necesitan para funcionar está en los volúmenes.
 Solo se pierde lo que hayas modificado a mano dentro del contenedor fuera de esos volúmenes
 (por ejemplo, código fuente o `menu.ini` editado directamente).
 
@@ -110,12 +110,25 @@ existe, el entrypoint no vuelve a instalar; por eso reiniciar o reconstruir la i
 
 ```bash
 mkdir -p backups
-docker compose exec -T db pg_dump -U "$POSTGRES_USER" -d guarani3 -Fc \
-  > backups/guarani3_$(date +%F).dump
+FECHA=$(date +%F)
 
-# Opcional: copiar la configuración Toba
-docker run --rm -v guarani_guarani_instalacion:/data -v "$PWD/backups:/out" \
-  alpine tar czf /out/instalacion_$(date +%F).tar.gz -C /data .
+# Las cuatro bases (USER/PASSWORD según corresponda)
+for base in guarani3 preinscripcion; do
+  docker compose exec -T db pg_dump -U "$POSTGRES_USER" -d "$base" -Fc \
+    > "backups/${base}_${FECHA}.dump"
+done
+docker compose exec -T db pg_dump -U "${KOLLA_DB_USER:-kolla}" -d kolla -Fc \
+  > "backups/kolla_${FECHA}.dump"
+docker compose exec -T db pg_dump -U "${TEHUELCHE_DB_USER:-tehuelche}" -d tehuelche -Fc \
+  > "backups/tehuelche_${FECHA}.dump"
+
+# Configuración de Toba de cada módulo
+for volumen in guarani_instalacion guarani_3w_instalacion \
+               guarani_preinscripcion_instalacion guarani_kolla_instalacion \
+               guarani_tehuelche_instalacion; do
+  docker run --rm -v "${volumen}:/data" -v "$PWD/backups:/out" \
+    alpine tar czf "/out/${volumen}_${FECHA}.tar.gz" -C /data .
+done
 ```
 
 ### Restore
@@ -123,30 +136,40 @@ docker run --rm -v guarani_guarani_instalacion:/data -v "$PWD/backups:/out" \
 ```bash
 docker compose down
 docker compose up -d db
-docker compose exec -T db pg_restore -U "$POSTGRES_USER" -d guarani3 --clean \
-  < backups/guarani3_YYYY-MM-DD.dump
-docker compose up -d gestion
+for base in guarani3 preinscripcion; do
+  docker compose exec -T db pg_restore -U "$POSTGRES_USER" -d "$base" --clean \
+    < "backups/${base}_YYYY-MM-DD.dump"
+done
+docker compose exec -T db pg_restore -U kolla -d kolla --clean \
+  < backups/kolla_YYYY-MM-DD.dump
+docker compose exec -T db pg_restore -U tehuelche -d tehuelche --clean \
+  < backups/tehuelche_YYYY-MM-DD.dump
+docker compose up -d
 ```
 
-Si también restaurás `instalacion`, extraérlo dentro del volumen:
+Si también restaurás la configuración de un módulo, extraer el tar dentro de su volumen:
 
 ```bash
-docker run --rm -v guarani_guarani_instalacion:/data -v "$PWD/backups:/in" \
-  alpine sh -c 'tar xzf /in/instalacion_YYYY-MM-DD.tar.gz -C /data'
+docker run --rm -v guarani_instalacion:/data -v "$PWD/backups:/in" \
+  alpine sh -c 'tar xzf /in/guarani_instalacion_YYYY-MM-DD.tar.gz -C /data'
 ```
 
 ## Actualizar el código
 
-El código fuente vive en `./src` (checkout SVN) y se copia a la imagen en el build.
+Hay tres checkouts SVN (`src`, `src-3w`, `src-preinscripcion`) y dos códigos extraídos de
+RAR (`src-kolla`, `src-tehuelche`). Todos se copian a su imagen en el build.
 
 ```bash
-# Actualizar el checkout en el host
+# Actualizar los checkouts SVN (reemplazar src por src-3w o src-preinscripcion)
 docker run --rm -e SVN_USER -e SVN_PASSWORD -v "$PWD/src:/work" -w /work alpine:3.20 \
   sh -c 'apk add --no-cache subversion >/dev/null && \
          svn cleanup --username "$SVN_USER" --password "$SVN_PASSWORD" /work && \
          svn update --non-interactive --username "$SVN_USER" --password "$SVN_PASSWORD" /work'
 
-# Reconstruir y recrear el contenedor (la base se conserva)
+# Para Kolla/Tehuelche: reemplazar el RAR en la raíz, borrar src-kolla / src-tehuelche
+# y volver a ejecutar scripts/05-extraer-kolla.sh / scripts/06-extraer-tehuelche.sh
+
+# Reconstruir y recrear los contenedores (las bases se conservan)
 ./scripts/02-up.sh
 ```
 
@@ -162,7 +185,7 @@ reinstalación completa: ver [Reinstalar desde cero](#reinstalar-desde-cero).
 ./scripts/reset.sh
 ```
 
-Elimina **todos los volúmenes** (incluida la base de datos) y vuelve a instalar.
+Elimina **todos los volúmenes** (las cuatro bases y las cinco configuraciones) y vuelve a instalar.
 El script pide confirmación. Equivale a:
 
 ```bash

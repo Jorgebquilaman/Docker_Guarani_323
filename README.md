@@ -22,9 +22,9 @@
 | | |
 |---|---|
 | 🧱 **Seis servicios** | PostgreSQL 14 + Gestión + Autogestión 3w + Preinscripción + Kolla + Tehuelche (cada módulo con su Apache) |
-| 📦 **Instalación automática** | Toba, carga del proyecto, esquema de negocio y auditoría en el primer arranque |
+| 📦 **Instalación automática** | Toba, proyectos, esquemas, datos base y migraciones de los cinco módulos en el primer arranque |
 | 🔁 **Idempotente** | Los reinicios y las reconstrucciones no reinstalan ni pierden datos |
-| 🌐 **Todo publicado** | Gestión, editor, API REST y JavaBridge de reportes |
+| 🌐 **Todo publicado** | Gestión, editor, API REST, Autogestión, Preinscripción, Kolla y Tehuelche |
 | 📖 **Documentación completa** | Instalación, operación, arquitectura, troubleshooting y seguridad |
 
 Basado en la [guía oficial de instalación en Linux del SIU](https://documentacion.siu.edu.ar/wiki/SIU-Guarani/version3.23.0/instalacion_desde_cero/instalacion/gestion/linux).
@@ -34,7 +34,7 @@ Código fuente: `nodos/iupa/gestion/trunk/3.23.0` del repositorio Colab.
 
 ## 🚀 Inicio rápido
 
-> **Requisitos previos:** Docker con Compose v2, ~10 GB libres y credenciales de Colab con acceso al nodo `iupa`.
+> **Requisitos previos:** Docker con Compose v2, ~15 GB libres, credenciales de Colab con acceso al nodo `iupa` y los instaladores `instalador_kolla_4.10.3.rar` e `instalador_tehuelche_4.5.2.rar` en la raíz del proyecto (se descargan del Portal de Servicios de Comunidad del SIU).
 
 ```bash
 # 1. Clonar y entrar
@@ -43,7 +43,7 @@ cd Docker_Guarani_323
 
 # 2. Configurar credenciales
 cp .env.example .env
-#    editar .env con tu usuario/clave de Colab y la clave de PostgreSQL
+#    editar .env: credenciales de Colab, claves de BD y de los usuarios admin
 
 # 3. Descargar el código fuente (no hace falta svn instalado)
 ./scripts/01-svn-checkout.sh
@@ -59,16 +59,17 @@ cp .env.example .env
 docker compose logs -f gestion
 ```
 
-Cuando aparezca `Apache iniciado. Gestión: http://localhost:8090/guarani/3.23`, ya está listo. ⏱️ Primera vez: 10–25 min según la conexión.
+Cuando los seis contenedores estén `healthy` y aparezca `Apache iniciado` en cada log, ya está listo. ⏱️ Primera vez: 20–40 min según la conexión (checkouts, RARs, Composer, Yarn y bases).
 
 <details>
 <summary>👀 ¿Qué hace el paso 4 por dentro?</summary>
 
-1. Espera a que PostgreSQL esté disponible.
-2. Ejecuta `toba instalacion instalar` → `guarani cargar -d` → `guarani instalar` → `crear_auditoria`.
-3. Configura `menu=2`, la ruta de `fop`, los permisos y el alias de Apache.
-4. Arranca el JavaBridge de Jasper en el puerto interno `8081`.
-5. Marca la instalación como completada para no repetirla.
+1. Espera a que PostgreSQL esté disponible y crea las bases propias que falten.
+2. Gestión: `toba instalacion instalar` → `guarani cargar -d` → `guarani instalar` → `crear_auditoria`.
+3. 3w y Preinscripción: generan `config.php`/`alias.conf` desde plantillas y crean sus usuarios.
+4. Kolla y Tehuelche: instalan en `instalacion.tmp`, convierten los SQL a LATIN1 y copian el resultado al volumen.
+5. Configura `menu=2`, `fop`, permisos `www-data` y los alias de Apache.
+6. Arranca el JavaBridge de Jasper en `8081` y marca cada instalación para no repetirla.
 
 </details>
 
@@ -86,7 +87,7 @@ Cuando aparezca `Apache iniciado. Gestión: http://localhost:8090/guarani/3.23`,
 | 🎓 **Tehuelche** | http://localhost:8094/tehuelche | `toba` / `toba123*-a` (configurable en `.env`) |
 | 🛠️ **Editor Toba** | http://localhost:8090/toba_editor/3.4 | `toba` / `toba` |
 | 🔌 **API REST** | http://localhost:8090/guarani/3.23/rest/ | Requiere configuración OAuth |
-| 🗄️ **PostgreSQL** | `localhost:5434` · base `guarani3` | Las de `.env` |
+| 🗄️ **PostgreSQL** | `localhost:5434` · bases `guarani3`, `preinscripcion`, `kolla`, `tehuelche` | `POSTGRES_*` (admin) y usuarios propios de Kolla/Tehuelche |
 
 > ¿Puerto ocupado? Cambiá `GESTION_PORT`, `W3_PORT`, `PREINSCRIPCION_PORT`, `KOLLA_PORT`, `TEHUELCHE_PORT` y `DB_PORT_HOST` en `.env`. No hace falta tocar el `docker-compose.yml`.
 > Para entrar a 3w necesitás una persona con usuario en Guaraní; en Preinscripción el administrador se crea automáticamente.
@@ -106,9 +107,10 @@ curl -o /dev/null -w "%{http_code}\n" http://localhost:8093/kolla/              
 curl -o /dev/null -w "%{http_code}\n" http://localhost:8094/tehuelche/                     # 200
 ```
 
-- [x] Checkout SVN de la revisión publicada
-- [x] Esquemas `desarrollo`, `negocio` y `negocio_auditoria`
-- [x] Usuario `toba` creado
+- [x] Checkouts SVN (Gestión 3.23.0, 3w 3.23.0, Preinscripción 3.23.0)
+- [x] RARs extraídos (Kolla 4.10.3 y Tehuelche 4.5.2)
+- [x] Cuatro bases LATIN1 con sus esquemas y datos base
+- [x] Usuarios admin creados en cada módulo
 - [x] Reportes Jasper con OpenJDK 17
 
 ---
@@ -133,7 +135,7 @@ curl -o /dev/null -w "%{http_code}\n" http://localhost:8094/tehuelche/          
 
 ```
 .
-├── docker-compose.yml      # db + gestion + autogestion + preinscripcion
+├── docker-compose.yml      # db + gestion + 3w + preinscripcion + kolla + tehuelche
 ├── Dockerfile              # Gestión: PHP 8.1 + Apache + Java
 ├── Dockerfile.3w           # Autogestión: PHP 8.1 + Apache + intl
 ├── Dockerfile.preinscripcion
@@ -144,7 +146,8 @@ curl -o /dev/null -w "%{http_code}\n" http://localhost:8094/tehuelche/          
 ├── scripts/                # checkout SVN, extracción del RAR, up y reset
 ├── docs/                   # documentación completa
 ├── .env.example            # plantilla sin secretos
-└── src/                    # checkout SVN (ignorado por Git)
+└── src*/                   # src, src-3w, src-preinscripcion, src-kolla, src-tehuelche
+                            # (todos ignorados por Git)
 ```
 
 ---
@@ -152,8 +155,8 @@ curl -o /dev/null -w "%{http_code}\n" http://localhost:8094/tehuelche/          
 ## 🔐 Seguridad
 
 - `.env` contiene tus credenciales y **está ignorado por Git**: nunca lo subas.
-- `src/` es código de SIU descargado de Colab: **tampoco se versiona**.
-- En producción: rotar la clave de `toba`, cambiar `TOBA_SALT`, activar HTTPS y no exponer el puerto `5434`.
+- `src*/` contiene código de SIU (SVN y RAR): **tampoco se versiona**.
+- En producción: rotar las claves de los usuarios admin de los cinco módulos, cambiar los salts, activar HTTPS y no exponer el puerto `5434`.
 
 Ver [SEGURIDAD.md](docs/SEGURIDAD.md) para el detalle.
 
@@ -161,6 +164,6 @@ Ver [SEGURIDAD.md](docs/SEGURIDAD.md) para el detalle.
 
 <div align="center">
 
-Hecho para el nodo **IUPA** · SIU-Guaraní 3.23.0 · [Repositorio](https://github.com/Jorgebquilaman/Docker_Guarani_323)
+Hecho para el nodo **IUPA** · Guaraní 3.23.0 · 3w · Preinscripción · Kolla 4.10.3 · Tehuelche 4.5.2 · [Repositorio](https://github.com/Jorgebquilaman/Docker_Guarani_323)
 
 </div>

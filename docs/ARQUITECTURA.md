@@ -37,19 +37,43 @@
   esquemas `desarrollo`, `tehuelche`, `referencia`. Publica `/tehuelche` en 8094.
   Ver [TEHUELCHE.md](TEHUELCHE.md).
 
-## Imagen
+## Imágenes
 
-- Base: `php:8.1-apache-bookworm` (arm64/amd64).
-- Paquetes: `git`, `subversion`, `unzip`, `zip`, `curl`, `libpq-dev`, `libpng-dev`,
-  `libjpeg-dev`, `libfreetype-dev`, `libzip-dev`, `default-jre-headless`, `graphviz`,
-  fuentes, `postgresql-client`, `cron`.
-- Extensiones PHP: `pgsql`, `pdo_pgsql`, `gd`, `zip`, `exif`, `bcmath`, `opcache`, `apcu`.
-- Composer 2 copiado desde la imagen oficial; dependencias fijadas por `composer.lock`
-  (framework `siu-toba/framework` v3.4.3, `siu-toba/jasper` v5.6.1.2, etc.).
-- Capas: primero `composer.json`/`composer.lock` (caché de dependencias), después el resto
-  del código, y por último los scripts de compatibilidad del proyecto.
+Todas parten de `php:8.1-apache-bookworm` (arm64/amd64) e instalan `pgsql`, `pdo_pgsql`,
+`gd`, `zip`, `exif`, `bcmath`, `opcache` y `apcu`, además de Composer 2 y `postgresql-client`.
+
+| Dockerfile | Módulo | Extra |
+|---|---|---|
+| `Dockerfile` | Gestión | `default-jre-headless`, JavaBridge Jasper, `graphviz` |
+| `Dockerfile.3w` | Autogestión | `intl` (Chulupi) |
+| `Dockerfile.preinscripcion` | Preinscripción | `intl` (Chulupi) |
+| `Dockerfile.kolla` | Kolla | `intl`, `xsl`, `svn`, `nodejs`/`yarn`, `iconv`, scripts de assets |
+| `Dockerfile.tehuelche` | Tehuelche | igual que Kolla |
+
+Las dependencias PHP están fijadas por los `composer.lock` de cada proyecto
+(Gestión usa `siu-toba/framework` v3.4.3; Kolla y Tehuelche traen el suyo).
+Kolla y Tehuelche convierten sus SQL UTF-8 a LATIN1 durante el build.
 
 ## Flujo del entrypoint
+
+Cada `docker/entrypoint*.sh` sigue el mismo esquema: esperar PostgreSQL → asegurar base y
+permisos → instalar si no existe el marcador `.docker-instalado` → linkear `toba.conf` o
+`alias.conf` → `apachectl configtest` → `apache2-foreground`.
+
+Particularidades:
+
+- **Gestión**: procedimiento documentado con `toba instalacion instalar`, `guarani cargar -d`,
+  `guarani instalar` (sin `-j`) y `crear_auditoria`. Respaldo con `bin/instalador`.
+  Configura `menu=2`, `fop` y arranca el JavaBridge en `8081`.
+- **3w**: usa `bin/docker-instalar` del repo y reescribe `config.php` con PHP (la clave tiene
+  caracteres que rompen `sed`). Reutiliza el JavaBridge de Gestión.
+- **Preinscripción**: crea la base, carga `BD/creacion/creacion_preinscripcion3_postgresql.sql`
+  y genera el usuario admin con `./preinscripcion user_admin`.
+- **Kolla y Tehuelche**: instalan en `instalacion.tmp` (el instalador rechaza el directorio
+  del volumen), copian el resultado, corrigen las rutas absolutas y todo se guarda en el
+  volumen. En Kolla se agrega además la `RewriteRule ^responder` de habilitaciones públicas.
+
+### Detalle: Gestión
 
 1. Espera a que PostgreSQL acepte conexiones.
 2. Si no existe `instalacion/.docker-instalado`:
@@ -84,6 +108,9 @@
 | `/toba_usuarios/3.4` | administración de usuarios |
 | `/toba_guarani3` | núcleo del framework |
 | `/3w` (contenedor `autogestion`) | autogestión (`src/siu/www`) |
+| `/preinscripcion/iupa`, `/preinscripcion_admin/iupa` | Preinscripción (alumno/admin) |
+| `/kolla`, `/kolla/toba` | Kolla y su núcleo Toba |
+| `/tehuelche`, `/tehuelche/toba` | Tehuelche y su núcleo Toba |
 
 ## Decisiones de configuración
 

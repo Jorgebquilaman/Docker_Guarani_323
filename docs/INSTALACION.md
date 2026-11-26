@@ -1,18 +1,32 @@
 # Instalación paso a paso
 
-Esta guía permite levantar Guaraní Gestión en **cualquier equipo** (macOS, Linux o Windows
-con WSL2) sin instalar PHP, Apache, PostgreSQL ni SVN en la máquina anfitriona: todo corre
-dentro de Docker.
+Esta guía permite levantar los **seis servicios** (PostgreSQL, Gestión, Autogestión 3w,
+Preinscripción, Kolla y Tehuelche) en **cualquier equipo** (macOS, Linux o Windows con WSL2)
+sin instalar PHP, Apache, PostgreSQL, SVN ni Yarn en la máquina anfitriona: todo corre dentro
+de Docker.
+
+## Resumen de módulos
+
+| Módulo | Servicio | Puerto | Base de datos | Usuario admin |
+|---|---|---|---|---|
+| Gestión 3.23.0 | `gestion` | 8090 | `guarani3` (esquemas `desarrollo`, `negocio`) | `toba` |
+| Editor / API REST | `gestion` | 8090 | `guarani3` | `toba` |
+| Autogestión 3w 3.23.0 | `autogestion` | 8091 | `guarani3` | persona de Guaraní |
+| Preinscripción 3.23.0 | `preinscripcion` | 8092 | `preinscripcion` | `admin` |
+| Kolla 4.10.3 | `kolla` | 8093 | `kolla` | `toba` |
+| Tehuelche 4.5.2 | `tehuelche` | 8094 | `tehuelche` | `toba` |
+| PostgreSQL | `db` | 5434 | las cuatro bases | `POSTGRES_USER` |
 
 ## 1. Requisitos
 
 | Requisito | Detalle |
 |---|---|
 | Docker | Docker Desktop 24+ o Docker Engine con **Compose v2** (`docker compose version`) |
-| Memoria | 8 GB de RAM o más recomendados (el VM de Docker necesita ~4 GB libres) |
-| Disco | ~10 GB libres (código SVN ~1 GB, imagen ~2,3 GB, volúmenes y caché) |
-| Red | Acceso a `colab.siu.edu.ar`, `satis.siu.edu.ar`, `api.github.com`, `deb.debian.org` y Docker Hub |
+| Memoria | 12 GB de RAM o más recomendados (seis contenedores, varios con Apache/PHP) |
+| Disco | ~15 GB libres (checkouts SVN ~1 GB, RARs, cinco imágenes, volúmenes y caché) |
+| Red | Acceso a `colab.siu.edu.ar`, `satis.siu.edu.ar`, `api.github.com`, `registry.npmjs.org`, `deb.debian.org` y Docker Hub |
 | Credenciales | Usuario/clave de **Colab** con acceso a `nodos/iupa` |
+| Instaladores RAR | `instalador_kolla_4.10.3.rar` e `instalador_tehuelche_4.5.2.rar` del Portal de Servicios de Comunidad del SIU |
 
 > Las imágenes base tienen variante **arm64** y **amd64**: funcionan tanto en Apple Silicon
 > como en Intel/PC sin emulación.
@@ -23,6 +37,10 @@ Si el usuario no tiene acceso al nodo `iupa`, debe solicitarlo mediante el
 **Gestor de Solicitudes (GdS)** del SIU, como indica la documentación oficial. El checkout
 usa autenticación **Digest**; un `401` casi siempre indica usuario/clave incorrectos o
 falta de permisos sobre esa ruta.
+
+Kolla y Tehuelche **no se bajan por SVN**: sus instaladores RAR se descargan del
+[Portal de Servicios de Comunidad](https://herramientas.comunidad.siu.edu.ar) y se colocan
+en la raíz del proyecto. No se versionan.
 
 ## 2. Preparar el proyecto
 

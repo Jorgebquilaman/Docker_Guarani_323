@@ -28,11 +28,15 @@ Error response from daemon: driver failed programming external connectivity ... 
 Ver qué lo ocupa y cambiar el valor en `.env`:
 
 ```bash
-lsof -nP -iTCP -sTCP:LISTEN | grep -E ':(8090|5434)\b'
+lsof -nP -iTCP -sTCP:LISTEN | grep -E ':(8090|8091|8092|8093|8094|5434)\b'
 ```
 
 ```dotenv
-GESTION_PORT=8091
+GESTION_PORT=8095        # Gestión
+W3_PORT=8096             # Autogestión
+PREINSCRIPCION_PORT=8097
+KOLLA_PORT=8098
+TEHUELCHE_PORT=8099
 DB_PORT_HOST=5435
 ```
 
@@ -113,18 +117,30 @@ docker compose exec gestion curl -s -o /dev/null -w "%{http_code}\n" http://loca
 Si devuelve 200, el problema es del healthcheck (por ejemplo un cambio de puerto interno
 o de alias). Reiniciar: `docker compose restart gestion`.
 
-## La instalación se hizo pero no entra con `toba`/`toba`
+## La instalación se hizo pero no entra con el usuario admin
+
+Cada módulo tiene su propio usuario/clave:
+
+| Módulo | Usuario | Clave |
+|---|---|---|
+| Gestión y editor | `toba` | `TOBA_PASSWORD` (`toba` por defecto) |
+| Kolla | `toba` | `KOLLA_PASSWORD` |
+| Tehuelche | `toba` | `TEHUELCHE_PASSWORD` |
+| Preinscripción admin | `PREINSCRIPCION_ADMIN_USER` | `PREINSCRIPCION_ADMIN_PASSWORD` |
+| 3w | persona de Guaraní | la de esa persona |
 
 ```bash
 docker compose exec db psql -U "$POSTGRES_USER" -d guarani3 \
   -tAc "select usuario, nombre from desarrollo.apex_usuario where usuario='toba'"
+docker compose exec db psql -U kolla -d kolla \
+  -tAc "select usuario from desarrollo.apex_usuario where usuario='toba'"
+docker compose exec db psql -U tehuelche -d tehuelche \
+  -tAc "select usuario from desarrollo.apex_usuario where usuario='toba'"
 ```
 
-- Si no aparece el usuario, la instalación no terminó: ver
-  `/var/log/guarani/entrypoint.log`.
-- Si aparece pero la clave no funciona, se cambió `TOBA_PASSWORD` después de instalar.
-  Opción 1: restaurar el valor original en `.env` y reinstalar (`reset.sh`).
-  Opción 2: cambiar la clave desde el editor (`/toba_editor/3.4`).
+- Si no aparece el usuario, la instalación no terminó: ver el `entrypoint.log` de ese módulo.
+- Si aparece pero la clave no funciona, se cambió la variable en `.env` después de instalar.
+  Restaurar el valor original y reinstalar (`reset.sh`) o cambiar la clave desde la interfaz.
 
 ## Reconstruir sin perder datos
 
@@ -298,7 +314,7 @@ Faltan los assets de Yarn. El build ejecuta los `post-install-cmd` del framework
 
 El paso 11 de la guía oficial requiere vincular Tehuelche con Guaraní e importar las
 propuestas desde **Administración → Sincronizar Propuestas**. Ver
-[TEHUELCHE.md → Integración con Guaraní](TEHUELCHE.md#integración-con-guaní-paso-11-de-la-guía).
+[TEHUELCHE.md → Integración con Guaraní](TEHUELCHE.md#integración-con-guaraní-paso-11-de-la-guía).
 
 ## Diagnóstico general
 
