@@ -170,6 +170,40 @@ services:
       start_period: 600s
       retries: 10
 
+  tehuelche:
+    build:
+      context: .
+      dockerfile: Dockerfile.tehuelche
+    container_name: guarani_tehuelche
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      TZ: America/Argentina/Buenos_Aires
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      PG_ADMIN_USER: ${POSTGRES_USER}
+      PG_ADMIN_PASSWORD: ${POSTGRES_PASSWORD}
+      TEHUELCHE_DB: tehuelche
+      TEHUELCHE_DB_USER: ${TEHUELCHE_DB_USER:-tehuelche}
+      TEHUELCHE_DB_PASSWORD: ${TEHUELCHE_DB_PASSWORD:-tehuelche123}
+      TEHUELCHE_PORT: ${TEHUELCHE_PORT:-8094}
+      TEHUELCHE_ALIAS: ${TEHUELCHE_ALIAS:-/tehuelche}
+      TEHUELCHE_PASSWORD: ${TEHUELCHE_PASSWORD:-toba123*-a}
+    ports:
+      - "${TEHUELCHE_PORT:-8094}:80"
+    volumes:
+      - guarani_tehuelche_instalacion:/opt/tehuelche/instalacion
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost${TEHUELCHE_ALIAS:-/tehuelche}/"]
+      interval: 30s
+      timeout: 10s
+      start_period: 600s
+      retries: 10
+
 volumes:
   guarani_pgdata:
   guarani_instalacion:
@@ -181,3 +215,4 @@ volumes:
   guarani_3w_instalacion:
   guarani_preinscripcion_instalacion:
   guarani_kolla_instalacion:
+  guarani_tehuelche_instalacion:

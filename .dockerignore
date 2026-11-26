@@ -6,6 +6,8 @@ src-preinscripcion/.svn
 src-preinscripcion/**/.svn
 src-kolla/.svn
 src-kolla/**/.svn
+src-tehuelche/.svn
+src-tehuelche/**/.svn
 *.rar
 .env
 *.log

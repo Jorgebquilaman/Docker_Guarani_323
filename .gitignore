@@ -2,6 +2,7 @@ src/
 src-3w/
 src-preinscripcion/
 src-kolla/
+src-tehuelche/
 .env
 *.log
 .DS_Store

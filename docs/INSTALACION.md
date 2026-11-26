@@ -63,6 +63,12 @@ KOLLA_PASSWORD=toba123*-a
 KOLLA_DB_USER=kolla
 KOLLA_DB_PASSWORD=kolla123
 
+TEHUELCHE_PORT=8094
+TEHUELCHE_ALIAS=/tehuelche
+TEHUELCHE_PASSWORD=toba123*-a
+TEHUELCHE_DB_USER=tehuelche
+TEHUELCHE_DB_PASSWORD=tehuelche123
+
 TOBA_PASSWORD=toba
 TOBA_SALT='semilla_aleatoria_larga'
 ```
@@ -78,6 +84,7 @@ TOBA_SALT='semilla_aleatoria_larga'
 - `AUTOGESTION_*`: alias, unidad académica y email de ayuda del módulo 3w. Ver [3W.md](3W.md).
 - `PREINSCRIPCION_*`: puerto, punto de acceso y usuario admin de Preinscripción. Ver [PREINSCRIPCION.md](PREINSCRIPCION.md).
 - `KOLLA_*`: puerto, alias, clave del admin y usuario/clave de su base. Ver [KOLLA.md](KOLLA.md).
+- `TEHUELCHE_*`: puerto, alias, clave del admin y usuario/clave de su base. Ver [TEHUELCHE.md](TEHUELCHE.md).
 - `TOBA_PASSWORD`: clave del usuario administrador `toba` de Guaraní.
 - `TOBA_SALT`: semilla interna; cambiar por una cadena aleatoria larga.
 
@@ -87,14 +94,14 @@ Verificar antes de empezar:
 
 ```bash
 # macOS / Linux
-lsof -nP -iTCP -sTCP:LISTEN | grep -E ':(8090|8091|8092|8093|5434)\b'
+lsof -nP -iTCP -sTCP:LISTEN | grep -E ':(8090|8091|8092|8093|8094|5434)\b'
 
 # Windows (WSL2)
-netstat -ano | findstr ":8090 :8091 :8092 :8093 :5434"
+netstat -ano | findstr ":8090 :8091 :8092 :8093 :8094 :5434"
 ```
 
-Si hay conflicto, editar `GESTION_PORT`, `W3_PORT`, `PREINSCRIPCION_PORT`, `KOLLA_PORT` y
-`DB_PORT_HOST` en `.env`. **No hace falta** tocar `docker-compose.yml`.
+Si hay conflicto, editar `GESTION_PORT`, `W3_PORT`, `PREINSCRIPCION_PORT`, `KOLLA_PORT`,
+`TEHUELCHE_PORT` y `DB_PORT_HOST` en `.env`. **No hace falta** tocar `docker-compose.yml`.
 
 ## 3. Descargar el código fuente
 
@@ -105,6 +112,9 @@ Si hay conflicto, editar `GESTION_PORT`, `W3_PORT`, `PREINSCRIPCION_PORT`, `KOLL
 
 # Kolla: poner instalador_kolla_4.10.3.rar en la raíz del proyecto
 ./scripts/05-extraer-kolla.sh              # → ./src-kolla
+
+# Tehuelche: poner instalador_tehuelche_4.5.2.rar en la raíz del proyecto
+./scripts/06-extraer-tehuelche.sh          # → ./src-tehuelche
 ```
 
 Los scripts usan un contenedor `alpine` con `subversion`, por lo que **no hace falta
@@ -144,6 +154,8 @@ En la primera ejecución verás, en orden:
    usuario admin y `Apache de Preinscripcion iniciado.`
 10. En `kolla`: creación del rol/base, instalación Toba, carga de datos y
     `Apache de Kolla iniciado.`
+11. En `tehuelche`: creación del rol/base, instalación Toba, datos y migraciones hasta
+    4.5.1, y `Apache de Tehuelche iniciado.`
 
 Tiempo orientativo: 5–15 min para el checkout, 5–10 min para el build y 1–3 min para la
 instalación de la base, según conexión y máquina.
@@ -171,6 +183,9 @@ administración en http://localhost:8092/preinscripcion_admin/iupa (`admin` / la
 Kolla está en http://localhost:8093/kolla (`toba` / la clave de `KOLLA_PASSWORD`).
 Ver [KOLLA.md](KOLLA.md).
 
+Tehuelche está en http://localhost:8094/tehuelche (`toba` / la clave de `TEHUELCHE_PASSWORD`).
+Ver [TEHUELCHE.md](TEHUELCHE.md).
+
 ## 6. Verificación
 
 ```bash
@@ -181,6 +196,7 @@ curl -o /dev/null -w "%{http_code}\n" http://localhost:8090/guarani/3.23/rest/ #
 curl -o /dev/null -w "%{http_code}\n" http://localhost:8091/3w/                  # 200
 curl -Ls -o /dev/null -w "%{http_code}\n" http://localhost:8092/preinscripcion_admin/iupa/ # 200
 curl -o /dev/null -w "%{http_code}\n" http://localhost:8093/kolla/                         # 200
+curl -o /dev/null -w "%{http_code}\n" http://localhost:8094/tehuelche/                     # 200
 
 docker compose exec -T db psql -U "$POSTGRES_USER" -d preinscripcion \
   -tAc "select version_base from app_versiones_base"   # 3.23.0

@@ -262,6 +262,44 @@ Faltan los assets de Yarn. El build ejecuta los `post-install-cmd` del framework
 El instalador exige al menos 8 caracteres para `KOLLA_PASSWORD`. Usar por defecto
 `toba123*-a` (configurable en `.env`).
 
+## Tehuelche
+
+### Falta el RAR o `src-tehuelche/`
+
+Poner `instalador_tehuelche_4.5.2.rar` en la raíz y ejecutar
+`./scripts/06-extraer-tehuelche.sh`. El RAR y `src-tehuelche/` están ignorados por Git.
+
+### El instalador dice que ya existe una instalación
+
+El volumen `instalacion/` existe vacío y Toba lo rechaza. El entrypoint instala en
+`instalacion.tmp` y copia el resultado, igual que el script oficial `docker/bin/crear-bd.sh`.
+Si quedó un `.docker-instalado` viejo, limpiar:
+
+```bash
+docker run --rm -v guarani_tehuelche_instalacion:/data alpine sh -c 'rm -rf /data/* /data/.[!.]* 2>/dev/null || true'
+docker compose restart tehuelche
+```
+
+### Error de encoding al cargar SQL
+
+La base es LATIN1 y algunos SQL del RAR son UTF-8. El build los convierte con `iconv`.
+Verificar:
+
+```bash
+docker compose exec tehuelche sh -c "file -b -I /opt/tehuelche/sql/migraciones/4.1.0/nuevas_tablas.sql"
+```
+
+### CSS/JS 404 en `/tehuelche/toba/...`
+
+Faltan los assets de Yarn. El build ejecuta los `post-install-cmd` del framework y de
+`manejador-salida-bootstrap`; reconstruir la imagen si faltan.
+
+### Las propuestas no aparecen
+
+El paso 11 de la guía oficial requiere vincular Tehuelche con Guaraní e importar las
+propuestas desde **Administración → Sincronizar Propuestas**. Ver
+[TEHUELCHE.md → Integración con Guaraní](TEHUELCHE.md#integración-con-guaní-paso-11-de-la-guía).
+
 ## Diagnóstico general
 
 ```bash

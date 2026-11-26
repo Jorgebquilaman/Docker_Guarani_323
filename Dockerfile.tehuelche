@@ -1,0 +1,58 @@
+# syntax=docker/dockerfile:1.7
+FROM php:8.1-apache-bookworm
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    TOBA_PROYECTO=tehuelche \
+    TOBA_PROYECTO_DIR=/opt/tehuelche \
+    TOBA_INSTALACION_DIR=/opt/tehuelche/instalacion \
+    TOBA_DIR=/opt/tehuelche/vendor/siu-toba/framework \
+    TZ=America/Argentina/Buenos_Aires
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git subversion unzip zip curl ca-certificates file libpq-dev \
+        libpng-dev libjpeg62-turbo-dev libfreetype6-dev libzip-dev \
+        libicu-dev libxslt1-dev postgresql-client graphviz \
+        fonts-dejavu-core fonts-liberation nodejs npm \
+    && npm install -g yarn \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j"$(nproc)" \
+        pgsql pdo_pgsql gd zip exif bcmath intl xsl opcache \
+    && pecl install apcu \
+    && docker-php-ext-enable apcu \
+    && a2enmod rewrite setenvif headers expires \
+    && echo 'ServerName localhost' > /etc/apache2/conf-available/servername.conf \
+    && a2enconf servername \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+COPY docker/php/guarani.ini /usr/local/etc/php/conf.d/99-guarani.ini
+
+WORKDIR /opt/tehuelche
+
+COPY src-tehuelche/ ./
+
+# Normalizar encoding: la base es LATIN1, algunos SQL del RAR vienen en UTF-8.
+RUN find . -type f \( -name '*.sql' -o -name 'schema' \) | while read -r f; do \
+        if file -b -I "$f" | grep -q 'charset=utf-8'; then \
+            iconv -f UTF-8 -t ISO-8859-1 "$f" -o "$f.latin1" && mv "$f.latin1" "$f"; \
+        fi; \
+    done \
+    && composer install --no-dev --prefer-dist --no-interaction --no-scripts \
+    && composer dump-autoload --optimize --no-scripts \
+    && composer run-script post-install-cmd -d vendor/siu-toba/framework/ --no-interaction \
+    && composer run-script post-install-cmd -d vendor/siu/manejador-salida-bootstrap/ --no-interaction \
+    && chmod +x bin/instalador \
+    && mkdir -p www/img procesos temp vendor/siu-toba/framework/www \
+        vendor/siu-toba/framework/temp /var/log/tehuelche \
+    && chown -R www-data:www-data www procesos temp \
+        vendor/siu-toba/framework/www vendor/siu-toba/framework/temp /var/log/tehuelche \
+    && chmod -R g+rwX www procesos temp \
+        vendor/siu-toba/framework/www vendor/siu-toba/framework/temp
+
+COPY docker/entrypoint-tehuelche.sh /usr/local/bin/entrypoint-tehuelche.sh
+RUN chmod +x /usr/local/bin/entrypoint-tehuelche.sh
+
+EXPOSE 80
+
+ENTRYPOINT ["/usr/local/bin/entrypoint-tehuelche.sh"]
+CMD ["apache2-foreground"]

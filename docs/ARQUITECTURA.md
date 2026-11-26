@@ -4,17 +4,17 @@
 
 ```
                          host
-     ┌────────┬────────┬────────┬────────┬────────┐
-     │ :8090  │ :8091  │ :8092  │ :8093  │ :5434  │
-     └───┬────┴───┬────┴───┬────┴───┬────┴───┬────┘
-         │        │        │        │        │
-     ┌───▼───┐┌───▼───┐┌───▼────┐┌───▼───┐┌───▼─────────┐
-     │gestión││  3w   ││preinscr││ kolla ││     db      │
-     │PHP+JDK││PHP+intl││PHP+intl││PHP+xsl││ PostgreSQL14│
-     │Jasper ││Chulupi ││base    ││yarn   ││ 3 bases     │
-     └───┬───┘└───┬───┘└───┬────┘└───┬───┘└───┬─────────┘
-         │        │        │         │         │
-         └────────── red interna: guarani_default ─────────┘
+     ┌────────┬────────┬────────┬────────┬────────┬────────┐
+     │ :8090  │ :8091  │ :8092  │ :8093  │ :8094  │ :5434  │
+     └───┬────┴───┬────┴───┬────┴───┬────┴───┬────┴───┬────┘
+         │        │        │        │        │        │
+     ┌───▼───┐┌───▼───┐┌───▼────┐┌───▼───┐┌───▼────┐┌───▼─────────┐
+     │gestión││  3w   ││preinscr││ kolla ││tehuelche││     db      │
+     │PHP+JDK││PHP+intl││PHP+intl││PHP+xsl││PHP+xsl ││ PostgreSQL14│
+     │Jasper ││Chulupi ││base    ││yarn   ││yarn    ││ 4 bases     │
+     └───┬───┘└───┬───┘└───┬────┘└───┬───┘└───┬────┘└───┬─────────┘
+         │        │        │         │         │          │
+         └────────── red interna: guarani_default ─────────────────┘
 ```
 
 - **`db`**: `postgres:14-bookworm`. Base `guarani3`, encoding `LATIN1`, locale `C`,
@@ -32,6 +32,10 @@
 - **`kolla`**: imagen desde `Dockerfile.kolla`, construida del RAR `instalador_kolla_4.10.3.rar`.
   Base propia `kolla`, usuario de BD dedicado, PHP con `xsl`, `intl`, `svn` y Yarn para los
   assets. Publica `/kolla` en el puerto 8093. Ver [KOLLA.md](KOLLA.md).
+- **`tehuelche`**: imagen desde `Dockerfile.tehuelche`, construida del RAR
+  `instalador_tehuelche_4.5.2.rar`. Base propia `tehuelche`, usuario de BD dedicado y
+  esquemas `desarrollo`, `tehuelche`, `referencia`. Publica `/tehuelche` en 8094.
+  Ver [TEHUELCHE.md](TEHUELCHE.md).
 
 ## Imagen
 
@@ -99,7 +103,9 @@
 | Base propia para Preinscripción | La documentación oficial exige base LATIN1 separada; se crea en el init de PostgreSQL |
 | `str_replace` en PHP para `config.php` | Evita que claves con `&`, `#` o `\` se rompan con `sed` |
 | Usuario de BD propio para Kolla | Toba arma comandos shell con la clave; los caracteres especiales los rompen |
-| `iconv` de SQL a LATIN1 en el build de Kolla | `estructura.sql` viene en UTF-8 y la base es LATIN1 |
+| `iconv` de SQL a LATIN1 en el build de Kolla/Tehuelche | algunos SQL vienen en UTF-8 y la base es LATIN1 |
+| Usuario de BD propio para Tehuelche | misma razón que Kolla: claves con caracteres especiales rompen comandos Toba |
+| Instalación en `instalacion.tmp` | el instalador rechaza directorios de instalación existentes (el volumen siempre existe) |
 
 ## Archivos del repositorio
 
@@ -114,6 +120,7 @@
 ├── Dockerfile.3w         # Autogestión
 ├── Dockerfile.preinscripcion
 ├── Dockerfile.kolla
+├── Dockerfile.tehuelche
 ├── docker/
 │   ├── entrypoint.sh
 │   ├── entrypoint-3w.sh
@@ -127,10 +134,12 @@
 │   ├── 03-svn-checkout-3w.sh
 │   ├── 04-svn-checkout-preinscripcion.sh
 │   ├── 05-extraer-kolla.sh
+│   ├── 06-extraer-tehuelche.sh
 │   └── reset.sh
 ├── docs/                 # esta documentación
 ├── src/                  # checkout SVN de Gestión (NO versionar)
 ├── src-3w/               # checkout SVN de 3w (NO versionar)
 ├── src-preinscripcion/   # checkout SVN de Preinscripción (NO versionar)
-└── src-kolla/            # contenido del RAR de Kolla (NO versionar)
+├── src-kolla/            # contenido del RAR de Kolla (NO versionar)
+└── src-tehuelche/        # contenido del RAR de Tehuelche (NO versionar)
 ```

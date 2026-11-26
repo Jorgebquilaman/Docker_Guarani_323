@@ -63,6 +63,17 @@ docker compose exec -T db psql -U kolla -d kolla \
 Ver [KOLLA.md](KOLLA.md). Para backup de Kolla hay que incluir la base `kolla` además de
 `guarani3` y `preinscripcion`.
 
+### Tehuelche
+
+```bash
+docker compose logs -f tehuelche
+docker compose exec tehuelche tail -50 /var/log/tehuelche/entrypoint.log
+docker compose exec -T db psql -U tehuelche -d tehuelche \
+  -c "select table_schema, count(*) from information_schema.tables where table_schema not in ('pg_catalog','information_schema') group by 1"
+```
+
+Ver [TEHUELCHE.md](TEHUELCHE.md). El backup debe incluir también la base `tehuelche`.
+
 ## Volúmenes y persistencia
 
 | Volumen | Contenido |
@@ -76,6 +87,7 @@ Ver [KOLLA.md](KOLLA.md). Para backup de Kolla hay que incluir la base `kolla` a
 | `guarani_3w_instalacion` | `config.php`, `alias.conf`, `login.php` y logs de Autogestión |
 | `guarani_preinscripcion_instalacion` | `config.php`, `alias.conf`, `login.php` y logs de Preinscripción |
 | `guarani_kolla_instalacion` | `instalacion.ini`, `bases.ini`, `toba.conf` y logs de Kolla |
+| `guarani_tehuelche_instalacion` | `instalacion.ini`, `bases.ini`, `toba.conf` y logs de Tehuelche |
 
 Apagar los contenedores, reiniciar Docker Desktop o reconstruir la imagen (`up --build`)
 **no borra** los datos: todo lo que Guaraní necesita para funcionar está en los volúmenes.
