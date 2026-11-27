@@ -67,6 +67,8 @@ class controlador extends controlador_g3w2
         ];
 
         $token = JWT::encode($payload, $secreto, 'HS256');
+        // Los vínculos a esta operación llevan la clase 'no-ajax' (ver personalización
+        // iupa), así que llega como navegación completa y el Location funciona sin CORS.
         header('Location: ' . rtrim($url, '/') . '#token=' . $token);
         exit;
     }
